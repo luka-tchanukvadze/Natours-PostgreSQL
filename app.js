@@ -1,63 +1,22 @@
 const express = require("express");
+const morgan = require("morgan");
+
+const tourRourter = require("./routes/tourRoutes");
+const userRourter = require("./routes/userRoutes");
 
 const app = express();
 
+// 1) Global Middlewares
+app.use(morgan("dev"));
 app.use(express.json());
 
-const getAllTours = (req, res) => {
-  res.status(200).json({
-    status: "success",
-    // results: tours.length
-    // data: {
-    //   tours,
-    // },
-  });
-};
-const createTour = (req, res) => {
-  res.status(200).json({
-    status: "success",
-    tour: req.body,
-  });
-};
-
-const getTour = (req, res) => {
-  const { id } = req.params * 1;
-
-  // const tour = tours.find((el) => el.id === id);
-
-  res.status(200).json({
-    status: "success",
-  });
-};
-
-const updateTour = (req, res) => {
-  const { id } = req.params * 1;
-
-  // const tour = tours.find((el) => el.id === id);
-
-  res.status(200).json({
-    status: "success",
-  });
-};
-
-const deleteTour = (req, res) => {
-  const { id } = req.params * 1;
-
-  // const tour = tours.find((el) => el.id === id);
-
-  res.status(200).json({
-    status: "success",
-  });
-};
-
-app.route("/api/v1/tours").get(getAllTours).post(createTour);
-app
-  .route("/api/v1/tours/:id")
-  .get(getTour)
-  .patch(updateTour)
-  .delete(deleteTour);
-
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`App running on port ${PORT}...`);
+app.use((req, res, next) => {
+  req.requestTime = new Date().toISOString();
+  next();
 });
+
+// 2) Routes
+app.use("/api/v1/tours", tourRourter);
+app.use("/api/v1/users", userRourter);
+
+module.exports = app;
