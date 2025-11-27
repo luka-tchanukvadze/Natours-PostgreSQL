@@ -1,16 +1,25 @@
 const pool = require('./../db');
 
-exports.getAllTours = (req, res) => {
-  res.status(200).json({
-    status: 'success',
-    // requestedAt: req.requestTime,
+exports.getAllTours = async (req, res) => {
+  try {
+    const sql = 'SELECT * FROM tours';
 
-    // results: tours.length
-    // data: {
-    //   tours,
-    // },
-  });
+    const result = await pool.query(sql);
+    const allTours = result.rows;
+
+    res.status(200).json({
+      status: 'success',
+      results: allTours.length,
+      data: {
+        tours: allTours,
+      },
+    });
+  } catch (error) {
+    console.log(error.message);
+    res.status(400).json({ status: 'fail', message: error.message });
+  }
 };
+
 exports.createTour = async (req, res) => {
   try {
     const { name, rating, price } = req.body;
@@ -34,14 +43,30 @@ exports.createTour = async (req, res) => {
   }
 };
 
-exports.getTour = (req, res) => {
-  const { id } = req.params * 1;
+exports.getTour = async (req, res) => {
+  const { id } = req.params;
 
-  // const tour = tours.find((el) => el.id === id);
+  try {
+    const sql = 'SELECT * FROM tours WHERE id = $1';
+    const value = [id];
+    const result = await pool.query(sql, value);
+    const tour = result.rows[0];
 
-  res.status(200).json({
-    status: 'success',
-  });
+    if (!tour) {
+      return res.status(404).json({
+        status: 'fail',
+        message: `No tour found with ID ${id}`,
+      });
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: tour,
+    });
+  } catch (error) {
+    console.log(error.message);
+    res.status(400).json({ status: 'fail', message: error.message });
+  }
 };
 
 exports.updateTour = (req, res) => {
