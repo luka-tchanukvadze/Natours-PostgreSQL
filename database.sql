@@ -1,1 +1,1 @@
-CREATE DATABASE natoursPsql;
+CREATE DATABASE natourspsql;
