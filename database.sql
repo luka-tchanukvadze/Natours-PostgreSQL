@@ -1,1 +1,9 @@
 CREATE DATABASE natourspsql;
+
+
+CREATE TABLE tours (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL UNIQUE, 
+  rating NUMERIC(2, 1) DEFAULT 4.5, 
+  price INTEGER NOT NULL 
+);
