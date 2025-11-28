@@ -100,14 +100,22 @@ exports.updateTour = async (req, res) => {
   }
 };
 
-exports.deleteTour = (req, res) => {
-  const { id } = req.params * 1;
+exports.deleteTour = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-  // const tour = tours.find((el) => el.id === id);
+    const sql = `DELETE FROM tours WHERE id = $1`;
+    const values = [id];
+    await pool.query(sql, values);
 
-  res.status(200).json({
-    status: 'success',
-  });
+    res.status(200).json({
+      status: 'success',
+      message: 'Tour successfully deleted',
+    });
+  } catch (error) {
+    console.log(error.message);
+    res.status(400).json({ status: 'fail', message: error.message });
+  }
 };
 
 // exports.checkBody = (req, res, next) => {
