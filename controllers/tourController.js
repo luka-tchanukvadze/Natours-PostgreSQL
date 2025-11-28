@@ -69,14 +69,28 @@ exports.getTour = async (req, res) => {
   }
 };
 
-exports.updateTour = (req, res) => {
-  const { id } = req.params * 1;
+exports.updateTour = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, rating, price } = req.body;
 
-  // const tour = tours.find((el) => el.id === id);
+    const sql =
+      'UPDATE tours SET name = $1, rating = $2, price = $3 where id = $4 RETURNING *';
+    const values = [name, rating, price, id];
+    const result = await pool.query(sql, values);
 
-  res.status(200).json({
-    status: 'success',
-  });
+    const updatedTour = result.rows[0];
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        tour: updatedTour,
+      },
+    });
+  } catch (error) {
+    console.log(error.message);
+    res.status(400).json({ status: 'fail', message: error.message });
+  }
 };
 
 exports.deleteTour = (req, res) => {
