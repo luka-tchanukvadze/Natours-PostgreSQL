@@ -74,8 +74,15 @@ exports.updateTour = async (req, res) => {
     const { id } = req.params;
     const { name, rating, price } = req.body;
 
-    const sql =
-      'UPDATE tours SET name = $1, rating = $2, price = $3 where id = $4 RETURNING *';
+    const sql = `
+      UPDATE tours
+      SET 
+        name   = COALESCE($1, name),
+        rating = COALESCE($2, rating),
+        price  = COALESCE($3, price)
+      WHERE id = $4
+      RETURNING *;
+    `;
     const values = [name, rating, price, id];
     const result = await pool.query(sql, values);
 
