@@ -1,9 +1,23 @@
 CREATE DATABASE natourspsql;
 
-
 CREATE TABLE tours (
   id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL UNIQUE, 
-  rating NUMERIC(2, 1) DEFAULT 4.5, 
-  price INTEGER NOT NULL 
+  name VARCHAR(255) NOT NULL UNIQUE,
+  duration INTEGER NOT NULL,
+  max_group_size INTEGER NOT NULL,
+
+  rating NUMERIC(2,1) DEFAULT 4.5,
+  ratings_quantity INTEGER DEFAULT 0,
+
+  price INTEGER NOT NULL,
+  price_discount INTEGER,
+
+  summary TEXT NOT NULL,
+  description TEXT NOT NULL,
+
+  image_cover VARCHAR(255) NOT NULL,
+  images TEXT[],
+
+  created_at TIMESTAMP DEFAULT NOW(),
+  start_dates TIMESTAMP[]
 );
