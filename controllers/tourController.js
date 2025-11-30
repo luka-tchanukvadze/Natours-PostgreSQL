@@ -22,11 +22,42 @@ exports.getAllTours = async (req, res) => {
 
 exports.createTour = async (req, res) => {
   try {
-    const { name, rating, price } = req.body;
+    const {
+      name,
+      duration,
+      max_group_size,
+      rating,
+      ratings_quantity,
+      price,
+      summary,
+      description,
+      image_cover,
+      images,
+      start_dates,
+    } = req.body;
 
-    const sql =
-      'INSERT INTO tours (name, rating, price) VALUES($1, $2, $3) RETURNING *';
-    const values = [name, rating, price];
+    const sql = `
+      INSERT INTO tours (
+        name, duration, max_group_size, rating, ratings_quantity, price,
+        summary, description, image_cover, images, start_dates
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+      ) RETURNING *
+    `;
+
+    const values = [
+      name,
+      duration,
+      max_group_size,
+      rating || 4.5,
+      ratings_quantity || 0,
+      price,
+      summary,
+      description,
+      image_cover,
+      images || [],
+      start_dates || [],
+    ];
 
     const result = await pool.query(sql, values);
     const newTour = result.rows[0];
