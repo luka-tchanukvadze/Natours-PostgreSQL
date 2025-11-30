@@ -2,16 +2,32 @@ const pool = require('./../db');
 
 exports.getAllTours = async (req, res) => {
   try {
-    const sql = 'SELECT * FROM tours';
+    // BUILD QUERY
+    const queryObj = { ...req.query };
+    const excludedFields = ['page', 'sort', 'limit', 'fields'];
+    excludedFields.forEach((el) => delete queryObj[el]);
 
-    const result = await pool.query(sql);
-    const allTours = result.rows;
+    // Build dynamic WHERE clause
+    const keys = Object.keys(queryObj);
+    const values = Object.values(queryObj);
+
+    let sql = 'SELECT * FROM tours';
+    if (keys.length > 0) {
+      const conditions = keys
+        .map((key, i) => `${key} = $${i + 1}`)
+        .join(' AND ');
+      sql += ` WHERE ${conditions}`;
+    }
+
+    // EXECUTE
+    const result = await pool.query(sql, values);
+    const filteredTours = result.rows;
 
     res.status(200).json({
       status: 'success',
-      results: allTours.length,
+      results: filteredTours.length,
       data: {
-        tours: allTours,
+        tours: filteredTours,
       },
     });
   } catch (error) {
