@@ -54,7 +54,7 @@ exports.getAllTours = async (req, res) => {
       sql += ' WHERE ' + conditions.join(' AND ');
     }
 
-    // SORT
+    // SORTING
     if (req.query.sort) {
       const sortBy = req.query.sort
         .split(',')
@@ -66,7 +66,22 @@ exports.getAllTours = async (req, res) => {
       sql += ` ORDER BY ${sortBy}`;
     }
 
+    // PAGINATION
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 100;
+    const offset = (page - 1) * limit;
+
+    sql += ` LIMIT ${limit} OFFSET ${offset}`;
+
+    // EXECUTE QUERY
     const result = await pool.query(sql, values);
+
+    if (result.rows.length === 0 && page > 1) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'This page does not exist',
+      });
+    }
 
     res.status(200).json({
       status: 'success',
