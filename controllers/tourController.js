@@ -7,10 +7,19 @@ exports.getAllTours = async (req, res) => {
     const excludedFields = ['page', 'sort', 'limit', 'fields'];
     excludedFields.forEach((el) => delete queryObj[el]);
 
-    let sql = 'SELECT * FROM tours';
+    let sql;
     let conditions = [];
     let values = [];
     let index = 1;
+
+    // Building sql command
+    // LIMIT
+    if (req.query.fields) {
+      const columns = req.query.fields.split(',').join(', ');
+      sql = `SELECT ${columns} FROM tours`;
+    } else {
+      sql = 'SELECT * FROM tours';
+    }
 
     // FILTERING
     for (const key in queryObj) {
