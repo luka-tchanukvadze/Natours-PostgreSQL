@@ -12,6 +12,7 @@ exports.getAllTours = async (req, res) => {
     let values = [];
     let index = 1;
 
+    // FILTERING
     for (const key in queryObj) {
       const value = queryObj[key];
 
@@ -42,6 +43,18 @@ exports.getAllTours = async (req, res) => {
 
     if (conditions.length > 0) {
       sql += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    // SORT
+    if (req.query.sort) {
+      const sortBy = req.query.sort
+        .split(',')
+        .map((field) =>
+          field.startsWith('-') ? `${field.slice(1)} DESC` : `${field} ASC`
+        )
+        .join(', ');
+
+      sql += ` ORDER BY ${sortBy}`;
     }
 
     const result = await pool.query(sql, values);
