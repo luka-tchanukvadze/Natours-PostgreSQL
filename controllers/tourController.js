@@ -2,36 +2,57 @@ const pool = require('./../db');
 
 exports.getAllTours = async (req, res) => {
   try {
-    // BUILD QUERY
     const queryObj = { ...req.query };
+
     const excludedFields = ['page', 'sort', 'limit', 'fields'];
     excludedFields.forEach((el) => delete queryObj[el]);
 
-    // Build dynamic WHERE clause
-    const keys = Object.keys(queryObj);
-    const values = Object.values(queryObj);
-
     let sql = 'SELECT * FROM tours';
-    if (keys.length > 0) {
-      const conditions = keys
-        .map((key, i) => `${key} = $${i + 1}`)
-        .join(' AND ');
-      sql += ` WHERE ${conditions}`;
+    let conditions = [];
+    let values = [];
+    let index = 1;
+
+    for (const key in queryObj) {
+      const value = queryObj[key];
+
+      if (typeof value === 'object') {
+        // Handle nested filters: duration[gte], price[lte], etc.
+        for (const op in value) {
+          const operatorMap = {
+            gte: '>=',
+            gt: '>',
+            lte: '<=',
+            lt: '<',
+          };
+
+          const operator = operatorMap[op];
+          if (!operator) continue;
+
+          conditions.push(`${key} ${operator} $${index}`);
+          values.push(value[op]);
+          index++;
+        }
+      } else {
+        // Normal equality filter: ?duration=5
+        conditions.push(`${key} = $${index}`);
+        values.push(value);
+        index++;
+      }
     }
 
-    // EXECUTE
+    if (conditions.length > 0) {
+      sql += ' WHERE ' + conditions.join(' AND ');
+    }
+
     const result = await pool.query(sql, values);
-    const filteredTours = result.rows;
 
     res.status(200).json({
       status: 'success',
-      results: filteredTours.length,
-      data: {
-        tours: filteredTours,
-      },
+      results: result.rows.length,
+      data: { tours: result.rows },
     });
   } catch (error) {
-    console.log(error.message);
+    console.log(error);
     res.status(400).json({ status: 'fail', message: error.message });
   }
 };
