@@ -1,5 +1,13 @@
 const pool = require('./../db');
 
+exports.aliasTopTours = (req, res, next) => {
+  req.query.limit = '2';
+  (req.query.sort = '-rating, price'),
+    (req.fields = 'name,price,rating,summary,difficulty');
+
+  next();
+};
+
 exports.getAllTours = async (req, res) => {
   try {
     const queryObj = { ...req.query };
