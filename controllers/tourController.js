@@ -1,4 +1,5 @@
 const pool = require('./../db');
+const APIFeatures = require('./../utils/apiFeatures');
 
 exports.aliasTopTours = (req, res, next) => {
   req.query.limit = '2';
@@ -10,81 +11,15 @@ exports.aliasTopTours = (req, res, next) => {
 
 exports.getAllTours = async (req, res) => {
   try {
-    const queryObj = { ...req.query };
+    const features = new APIFeatures('tours', req.query)
+      .filter()
+      .sort()
+      .fields()
+      .paginate();
 
-    const excludedFields = ['page', 'sort', 'limit', 'fields'];
-    excludedFields.forEach((el) => delete queryObj[el]);
+    const result = await pool.query(features.sql, features.values);
 
-    let sql;
-    let conditions = [];
-    let values = [];
-    let index = 1;
-
-    // Building sql command
-    // LIMIT
-    if (req.query.fields) {
-      const columns = req.query.fields.split(',').join(', ');
-      sql = `SELECT ${columns} FROM tours`;
-    } else {
-      sql = 'SELECT * FROM tours';
-    }
-
-    // FILTERING
-    for (const key in queryObj) {
-      const value = queryObj[key];
-
-      if (typeof value === 'object') {
-        // Handle nested filters: duration[gte], price[lte], etc.
-        for (const op in value) {
-          const operatorMap = {
-            gte: '>=',
-            gt: '>',
-            lte: '<=',
-            lt: '<',
-          };
-
-          const operator = operatorMap[op];
-          if (!operator) continue;
-
-          conditions.push(`${key} ${operator} $${index}`);
-          values.push(value[op]);
-          index++;
-        }
-      } else {
-        // Normal equality filter: ?duration=5
-        conditions.push(`${key} = $${index}`);
-        values.push(value);
-        index++;
-      }
-    }
-
-    if (conditions.length > 0) {
-      sql += ' WHERE ' + conditions.join(' AND ');
-    }
-
-    // SORTING
-    if (req.query.sort) {
-      const sortBy = req.query.sort
-        .split(',')
-        .map((field) =>
-          field.startsWith('-') ? `${field.slice(1)} DESC` : `${field} ASC`
-        )
-        .join(', ');
-
-      sql += ` ORDER BY ${sortBy}`;
-    }
-
-    // PAGINATION
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 100;
-    const offset = (page - 1) * limit;
-
-    sql += ` LIMIT ${limit} OFFSET ${offset}`;
-
-    // EXECUTE QUERY
-    const result = await pool.query(sql, values);
-
-    if (result.rows.length === 0 && page > 1) {
+    if (result.rows.length === 0 && req.query.page > 1) {
       return res.status(404).json({
         status: 'fail',
         message: 'This page does not exist',
@@ -96,9 +31,8 @@ exports.getAllTours = async (req, res) => {
       results: result.rows.length,
       data: { tours: result.rows },
     });
-  } catch (error) {
-    console.log(error);
-    res.status(400).json({ status: 'fail', message: error.message });
+  } catch (err) {
+    res.status(400).json({ status: 'fail', message: err.message });
   }
 };
 
