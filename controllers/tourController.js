@@ -175,3 +175,31 @@ exports.deleteTour = async (req, res) => {
 
 //   next();
 // };
+
+exports.getTourStats = async (req, res) => {
+  try {
+    const sql = `
+      SELECT
+        difficulty,
+        COUNT(*) AS total_tours,
+        AVG(rating) AS avg_rating,
+        AVG(price) AS avg_price,
+        MIN(price) AS min_price,
+        MAX(price) AS max_price
+      FROM tours
+      WHERE rating >= 4.5
+      GROUP BY difficulty
+      ORDER BY difficulty;
+    `;
+    const result = await pool.query(sql);
+    const stats = result.rows;
+
+    res.status(200).json({
+      status: 'success',
+      data: stats,
+    });
+  } catch (error) {
+    console.log(error.message);
+    res.status(400).json({ status: 'fail', message: error.message });
+  }
+};
