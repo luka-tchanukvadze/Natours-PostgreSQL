@@ -203,3 +203,38 @@ exports.getTourStats = async (req, res) => {
     res.status(400).json({ status: 'fail', message: error.message });
   }
 };
+
+exports.getMonthlyPlan = async (req, res) => {
+  try {
+    const year = Number(req.params.year);
+
+    const sql = `
+      SELECT 
+        EXTRACT(MONTH FROM sd) AS month,
+        COUNT(*) AS num_tour_starts,
+        ARRAY_AGG(t.name) AS tours
+      FROM tours t,
+      UNNEST(t.start_dates) AS sd
+      WHERE sd BETWEEN $1 AND $2
+      GROUP BY month
+      ORDER BY num_tour_starts DESC
+      LIMIT 12;
+    `;
+
+    const values = [`${year}-01-01`, `${year}-12-31`];
+
+    const result = await pool.query(sql, values);
+
+    res.status(200).json({
+      status: 'success',
+      results: result.rows.length,
+      data: result.rows,
+    });
+  } catch (error) {
+    console.log(error.message);
+    res.status(400).json({
+      status: 'fail',
+      message: error.message,
+    });
+  }
+};
