@@ -9,6 +9,13 @@ exports.aliasTopTours = (req, res, next) => {
   next();
 };
 
+function addVirstuals(tour) {
+  return {
+    ...tour,
+    duration_in_weeks: tour.duration / 7,
+  };
+}
+
 exports.getAllTours = async (req, res) => {
   try {
     const features = new APIFeatures('tours', req.query)
@@ -26,10 +33,12 @@ exports.getAllTours = async (req, res) => {
       });
     }
 
+    const toursWithVirtuals = result.rows.map(addVirstuals);
+
     res.status(200).json({
       status: 'success',
       results: result.rows.length,
-      data: { tours: result.rows },
+      data: { tours: toursWithVirtuals },
     });
   } catch (err) {
     res.status(400).json({ status: 'fail', message: err.message });
