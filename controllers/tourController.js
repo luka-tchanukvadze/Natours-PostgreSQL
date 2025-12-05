@@ -100,9 +100,8 @@ exports.createTour = async (req, res) => {
 };
 
 exports.getTour = async (req, res) => {
-  const { id } = req.params;
-
   try {
+    const { id } = req.params;
     const sql = 'SELECT * FROM tours WHERE id = $1';
     const value = [id];
     const result = await pool.query(sql, value);
