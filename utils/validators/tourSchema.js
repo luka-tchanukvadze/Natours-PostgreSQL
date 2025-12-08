@@ -4,7 +4,7 @@ exports.tourSchema = z
   .object({
     name: z
       .string({ message: 'Name must be a string' })
-      .min(1, { message: 'Name is too short' })
+      .min(2, { message: 'Name is too short' })
       .max(15, { message: 'Name is too long' }),
 
     duration: z

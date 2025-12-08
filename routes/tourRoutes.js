@@ -1,5 +1,7 @@
 const express = require('express');
 const tourController = require('./../controllers/tourController');
+const { tourSchema } = require('./../utils/validators/tourSchema');
+const { validate } = require('./../utils/validators/validate');
 
 const router = express.Router();
 
@@ -13,7 +15,7 @@ router.route('/monthly-plan/:year').get(tourController.getMonthlyPlan);
 router
   .route('/')
   .get(tourController.getAllTours)
-  .post(tourController.createTour);
+  .post(validate(tourSchema), tourController.createTour);
 router
   .route('/:id')
   .get(tourController.getTour)
