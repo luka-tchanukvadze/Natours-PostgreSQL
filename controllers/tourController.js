@@ -156,17 +156,6 @@ exports.deleteTour = async (req, res, next) => {
   });
 };
 
-// exports.checkBody = (req, res, next, next) => {
-//   if (!req.body.name || !req.body.price || !req.body.rating) {
-//     return res.status(400).json({
-//       status: 'fail',
-//       message: 'missing name or price',
-//     });
-//   }
-
-//   next();
-// };
-
 exports.getTourStats = catchAsync(async (req, res, next) => {
   const sql = `
       SELECT
