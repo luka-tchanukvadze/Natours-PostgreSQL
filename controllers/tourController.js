@@ -1,6 +1,7 @@
 const pool = require('./../db');
 const APIFeatures = require('./../utils/apiFeatures');
 const catchAsync = require('./../utils/catchAsync');
+const AppError = require('./../utils/appError');
 
 exports.aliasTopTours = (req, res, next) => {
   req.query.limit = '2';
@@ -99,10 +100,7 @@ exports.getTour = catchAsync(async (req, res, next) => {
   const tour = result.rows[0];
 
   if (!tour) {
-    return res.status(404).json({
-      status: 'fail',
-      message: `No tour found with ID ${id}`,
-    });
+    return next(new AppError(`No tour found with ID: ${id}`));
   }
 
   res.status(200).json({
@@ -129,6 +127,10 @@ exports.updateTour = catchAsync(async (req, res, next) => {
 
   const updatedTour = result.rows[0];
 
+  if (!updatedTour) {
+    return next(new AppError(`No tour found with ID: ${id}`));
+  }
+
   res.status(200).json({
     status: 'success',
     data: {
@@ -142,7 +144,11 @@ exports.deleteTour = async (req, res, next) => {
 
   const sql = `DELETE FROM tours WHERE id = $1`;
   const values = [id];
-  await pool.query(sql, values);
+  const result = await pool.query(sql, values);
+
+  if (result.rowCount === 0) {
+    return next(new AppError(`No tour found with ID: ${id}`));
+  }
 
   res.status(200).json({
     status: 'success',
