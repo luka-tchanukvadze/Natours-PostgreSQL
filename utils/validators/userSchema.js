@@ -21,19 +21,19 @@ exports.userSchema = z
       .string({ message: 'Password must be a string' })
       .min(8, { message: 'Password must be at least 8 characters' }),
 
-    passwordConfirm: z
+    password_confirm: z
       .string({ message: 'Password confirmation is required' })
       .min(8),
 
-    passwordChangedAt: z.date().optional(),
+    password_changed_at: z.date().optional(),
 
-    passwordResetToken: z.string().optional(),
+    password_reset_token: z.string().optional(),
 
-    passwordResetExpires: z.date().optional(),
+    password_reset_expires: z.date().optional(),
 
     active: z.boolean().optional().default(true),
   })
-  .refine((data) => data.password === data.passwordConfirm, {
+  .refine((data) => data.password === data.password_confirm, {
     message: 'Passwords are not the same',
     path: ['passwordConfirm'],
   });
