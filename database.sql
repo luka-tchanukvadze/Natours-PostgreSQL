@@ -31,7 +31,6 @@ CREATE TABLE users (
     role VARCHAR(20) NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'guide', 'lead-guide', 'admin')),
 
     password VARCHAR(255) NOT NULL,
-    password_confirm VARCHAR(255) NOT NULL,
 
     password_changed_at TIMESTAMP,
     password_reset_token VARCHAR(255),
