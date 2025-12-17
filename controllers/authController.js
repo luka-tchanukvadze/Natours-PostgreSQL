@@ -1,3 +1,5 @@
+const jwt = require('jsonwebtoken');
+
 const pool = require('./../db');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
@@ -31,52 +33,36 @@ const hashPasswordIfModified = async (user) => {
 exports.signup = catchAsync(async (req, res, next) => {
   const userData = await hashPasswordIfModified(req.body);
 
-  const {
-    name,
-    email,
-    photo,
-    role,
-    password,
-    password_changed_at,
-    password_reset_token,
-    password_reset_expires,
-    active,
-  } = userData;
+  const { name, email, photo, password } = userData;
 
   const sql = `
     INSERT INTO users (
       name,
       email,
       photo,
-      role,
-      password,
-      password_changed_at,
-      password_reset_token,
-      password_reset_expires,
-      active
+      password
     ) VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9
+      $1, $2, $3, $4
     )
     RETURNING *;
   `;
 
-  const values = [
-    name,
-    email,
-    photo,
-    role,
-    password,
-    password_changed_at,
-    password_reset_token,
-    password_reset_expires,
-    active,
-  ];
+  const values = [name, email, photo, password];
 
   const result = await pool.query(sql, values);
   const newUser = result.rows[0];
 
+  const token = jwt.sign(
+    {
+      id: newUser.id,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN }
+  );
+
   res.status(200).json({
     status: 'success',
+    token,
     data: {
       user: newUser,
     },
