@@ -7,6 +7,7 @@ const { userSchema } = require('./../utils/validators/userSchema');
 const router = express.Router();
 
 router.post('/signup', validate(userSchema), authController.signup);
+router.post('/login', authController.login);
 
 router
   .route('/')

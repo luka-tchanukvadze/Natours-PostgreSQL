@@ -2,7 +2,10 @@ const pool = require('./../db');
 const catchAsync = require('./../utils/catchAsync');
 
 exports.getAllUsers = catchAsync(async (req, res, next) => {
-  const sql = `SELECT * FROM users`;
+  const sql = `
+    SELECT id, name, email, photo, role, active
+    FROM users
+  `;
   const result = await pool.query(sql);
 
   if (!result.rows.length) {
@@ -12,11 +15,13 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
     });
   }
 
+  const users = result.rows;
+
   res.status(200).json({
     status: 'success',
     results: result.rows.length,
     data: {
-      users: result.rows,
+      users,
     },
   });
 });
