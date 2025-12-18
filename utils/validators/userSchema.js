@@ -25,8 +25,10 @@ exports.userSchema = z
       .string({ message: 'Password confirmation is required' })
       .min(8),
 
-    password_changed_at: z.date().optional(),
-
+    password_changed_at: z
+      .string()
+      .optional()
+      .transform((v) => new Date(v)),
     password_reset_token: z.string().optional(),
 
     password_reset_expires: z.date().optional(),

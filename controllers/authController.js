@@ -37,6 +37,18 @@ const signToken = (id) => {
   );
 };
 
+const changedPasswordAfter = (JWTTimestamp, user) => {
+  if (user.password_changed_at) {
+    const changedTimestamp = Math.floor(
+      new Date(user.password_changed_at).getTime() / 1000
+    );
+    const changedAfter = JWTTimestamp < changedTimestamp;
+    return changedAfter;
+  }
+
+  return false;
+};
+
 //////////////////////////////////
 //////////////////////////////////
 
@@ -48,21 +60,22 @@ const signToken = (id) => {
 exports.signup = catchAsync(async (req, res, next) => {
   const userData = await hashPasswordIfModified(req.body);
 
-  const { name, email, photo, password } = userData;
+  const { name, email, photo, password, password_changed_at } = userData;
 
   const sql = `
     INSERT INTO users (
       name,
       email,
       photo,
-      password
+      password,
+      password_changed_at
     ) VALUES (
-      $1, $2, $3, $4
+      $1, $2, $3, $4, $5
     )
     RETURNING *;
   `;
 
-  const values = [name, email, photo, password];
+  const values = [name, email, photo, password, password_changed_at];
 
   const result = await pool.query(sql, values);
   const newUser = result.rows[0];
@@ -136,7 +149,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   console.log(decoded);
   // 3) Check if user still exists
   const sql = `
-    SELECT id, name, email, password, role
+    SELECT id, name, email, role, password_changed_at
     FROM users
     WHERE id = $1
   `;
@@ -144,9 +157,9 @@ exports.protect = catchAsync(async (req, res, next) => {
   const values = [decoded.id];
 
   const result = await pool.query(sql, values);
-  const freshUser = result.rows[0];
+  const currentUser = result.rows[0];
 
-  if (!freshUser) {
+  if (!currentUser) {
     return next(
       new AppError(
         'The user belonging to this token does no longer exist.',
@@ -156,6 +169,13 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   // 4) Check if user changed password after the token was issued
+  if (changedPasswordAfter(decoded.iat, currentUser)) {
+    return next(
+      new AppError('User recently changed password. Please log in again.', 401)
+    );
+  }
 
+  // GRANT ACCESS TO PROTECTED ROUTE
+  req.user = currentUser;
   next();
 });
