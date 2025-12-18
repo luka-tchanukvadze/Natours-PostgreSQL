@@ -60,22 +60,21 @@ const changedPasswordAfter = (JWTTimestamp, user) => {
 exports.signup = catchAsync(async (req, res, next) => {
   const userData = await hashPasswordIfModified(req.body);
 
-  const { name, email, photo, password, password_changed_at } = userData;
+  const { name, email, photo, password } = userData;
 
   const sql = `
     INSERT INTO users (
       name,
       email,
       photo,
-      password,
-      password_changed_at
+      password
     ) VALUES (
-      $1, $2, $3, $4, $5
+      $1, $2, $3, $4
     )
     RETURNING *;
   `;
 
-  const values = [name, email, photo, password, password_changed_at];
+  const values = [name, email, photo, password];
 
   const result = await pool.query(sql, values);
   const newUser = result.rows[0];
