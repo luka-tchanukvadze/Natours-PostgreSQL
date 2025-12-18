@@ -1,3 +1,4 @@
+const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
 
 const pool = require('./../db');
@@ -123,8 +124,6 @@ exports.protect = catchAsync(async (req, res, next) => {
     token = req.headers.authorization.split(' ')[1];
   }
 
-  console.log(token);
-
   if (!token) {
     return next(
       new AppError('You are not logged in! Please log in to get access.', 401)
@@ -132,8 +131,29 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   // 2) Verification token
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
+  console.log(decoded);
   // 3) Check if user still exists
+  const sql = `
+    SELECT id, name, email, password, role
+    FROM users
+    WHERE id = $1
+  `;
+
+  const values = [decoded.id];
+
+  const result = await pool.query(sql, values);
+  const freshUser = result.rows[0];
+
+  if (!freshUser) {
+    return next(
+      new AppError(
+        'The user belonging to this token does no longer exist.',
+        401
+      )
+    );
+  }
 
   // 4) Check if user changed password after the token was issued
 
