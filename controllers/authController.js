@@ -60,21 +60,22 @@ const changedPasswordAfter = (JWTTimestamp, user) => {
 exports.signup = catchAsync(async (req, res, next) => {
   const userData = await hashPasswordIfModified(req.body);
 
-  const { name, email, photo, password } = userData;
+  const { name, email, photo, password, role } = userData;
 
   const sql = `
     INSERT INTO users (
       name,
       email,
       photo,
-      password
+      password,
+      role
     ) VALUES (
-      $1, $2, $3, $4
+      $1, $2, $3, $4, $5
     )
     RETURNING *;
   `;
 
-  const values = [name, email, photo, password];
+  const values = [name, email, photo, password, role];
 
   const result = await pool.query(sql, values);
   const newUser = result.rows[0];
@@ -178,3 +179,16 @@ exports.protect = catchAsync(async (req, res, next) => {
   req.user = currentUser;
   next();
 });
+
+exports.restrictTo = (...roles) => {
+  return (req, res, next) => {
+    // roles ['admin', 'lead-guide']. role='user'
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new AppError('You do not have permission to perform this action', 403)
+      );
+    }
+
+    next();
+  };
+};
