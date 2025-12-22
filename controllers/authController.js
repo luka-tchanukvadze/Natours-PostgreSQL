@@ -1,5 +1,6 @@
 const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
 const pool = require('./../db');
 const catchAsync = require('./../utils/catchAsync');
@@ -47,6 +48,19 @@ const changedPasswordAfter = (JWTTimestamp, user) => {
   }
 
   return false;
+};
+
+userSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+
+  this.password_reset_token = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+
+  this.password_reset_expires = Date.now() + 10 * 60 * 1000;
+
+  return resetToken;
 };
 
 //////////////////////////////////
@@ -192,6 +206,27 @@ exports.restrictTo = (...roles) => {
   };
 };
 
-exports.forgotPassword = (req, res, next) => {};
+exports.forgotPassword = catchAsync(async (req, res, next) => {
+  const { email } = req.body;
+  // 1) Get user based on POSTed email
+
+  if (!email) {
+    return next(new AppError('There is no user with this email address', 404));
+  }
+
+  const sql = `
+    SELECT id, name, email, password, role
+    FROM users
+    WHERE email = $1
+  `;
+
+  const values = [email];
+
+  const result = await pool.query(sql, values);
+  const currentUser = result.rows[0];
+
+  // 2) Generate the random reset token
+  // 3) Send it to user's email
+});
 
 exports.resetPassword = (req, res, next) => {};
