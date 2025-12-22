@@ -50,17 +50,18 @@ const changedPasswordAfter = (JWTTimestamp, user) => {
   return false;
 };
 
-userSchema.methods.createPasswordResetToken = function () {
+const createPasswordResetToken = () => {
   const resetToken = crypto.randomBytes(32).toString('hex');
 
-  this.password_reset_token = crypto
+  const hashedToken = crypto
     .createHash('sha256')
     .update(resetToken)
     .digest('hex');
 
-  this.password_reset_expires = Date.now() + 10 * 60 * 1000;
+  console.log(resetToken, hashedToken);
+  const expires = new Date(Date.now() + 10 * 60 * 1000);
 
-  return resetToken;
+  return { resetToken, hashedToken, expires };
 };
 
 //////////////////////////////////
@@ -226,6 +227,18 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   const currentUser = result.rows[0];
 
   // 2) Generate the random reset token
+  const { resetToken, hashedToken, expires } = createPasswordResetToken();
+
+  await pool.query(
+    `
+  UPDATE users
+  SET password_reset_token = $1,
+      password_reset_expires = $2
+  WHERE id = $3
+  `,
+    [hashedToken, expires, currentUser.id]
+  );
+  // await user.save({validateBeforeSave: false});
   // 3) Send it to user's email
 });
 
