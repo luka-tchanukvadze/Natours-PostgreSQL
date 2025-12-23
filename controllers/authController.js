@@ -7,7 +7,6 @@ const pool = require('./../db');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 const sendEmail = require('./../utils/email');
-
 ////////////////////////////////////////
 ////////////////////////////////////////
 
@@ -64,6 +63,14 @@ const createPasswordResetToken = () => {
 
   return { resetToken, hashedToken, expires };
 };
+
+userSchema.pre('save', function (next) {
+  if (!this.isModified('password') || this.isNew) return next();
+
+  this.password_changed_at = Date.now() - 1000;
+
+  next();
+});
 
 //////////////////////////////////
 //////////////////////////////////
@@ -248,7 +255,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
   try {
     await sendEmail({
-      email: user.email,
+      email: currentUser.email,
       subject: 'Your password reset token (valid for 10min)',
       message,
     });
@@ -268,4 +275,51 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   }
 });
 
-exports.resetPassword = (req, res, next) => {};
+exports.resetPassword = catchAsync(async (req, res, next) => {
+  // 1) Hash token
+  const hashedToken = crypto
+    .createHash('sha256')
+    .update(req.params.token)
+    .digest('hex');
+
+  // 2) Find user with valid token
+  const result = await pool.query(
+    `
+    SELECT id
+    FROM users
+    WHERE password_reset_token = $1
+      AND password_reset_expires > NOW()
+    `,
+    [hashedToken]
+  );
+
+  const user = result.rows[0];
+
+  if (!user) {
+    return next(new AppError('Token is invalid or has expired', 400));
+  }
+
+  // 3) Hash new password
+  const hashedPassword = await bcrypt.hash(req.body.password, 12);
+
+  // 4) Update password + clear reset fields
+  await pool.query(
+    `
+    UPDATE users
+    SET password = $1,
+        password_reset_token = NULL,
+        password_reset_expires = NULL,
+        password_changed_at = NOW()
+    WHERE id = $2
+    `,
+    [hashedPassword, user.id]
+  );
+
+  // 5) Log user in
+  const token = signToken(user.id);
+
+  res.status(200).json({
+    status: 'success',
+    token,
+  });
+});
