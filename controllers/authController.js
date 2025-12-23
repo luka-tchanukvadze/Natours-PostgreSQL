@@ -64,6 +64,18 @@ const createPasswordResetToken = () => {
   return { resetToken, hashedToken, expires };
 };
 
+const createSendToken = (user, statusCode, res) => {
+  const token = signToken(user.id);
+
+  res.status(statusCode).json({
+    status: 'success',
+    token,
+    data: {
+      user: user,
+    },
+  });
+};
+
 //////////////////////////////////
 //////////////////////////////////
 
@@ -95,15 +107,7 @@ exports.signup = catchAsync(async (req, res, next) => {
   const result = await pool.query(sql, values);
   const newUser = result.rows[0];
 
-  const token = signToken(newUser.id);
-
-  res.status(200).json({
-    status: 'success',
-    token,
-    data: {
-      user: newUser,
-    },
-  });
+  createSendToken(newUser, 200, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -134,12 +138,7 @@ exports.login = catchAsync(async (req, res, next) => {
   delete user.password;
 
   // 3) If everything ok, send token to client
-  const token = signToken(user.id);
-
-  res.status(200).json({
-    status: 'success',
-    token,
-  });
+  createSendToken(user, 200, res);
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -308,10 +307,46 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   );
 
   // 5) Log user in
-  const token = signToken(user.id);
+  createSendToken(user, 200, res);
+});
 
-  res.status(200).json({
-    status: 'success',
-    token,
-  });
+exports.updatePassword = catchAsync(async (req, res, next) => {
+  // 1) Get current user with password
+  const result = await pool.query(
+    `
+    SELECT id, password
+    FROM users
+    WHERE id = $1
+    `,
+    [req.user.id]
+  );
+
+  const user = result.rows[0];
+
+  // 2) Check current password
+  const isCorrect = await bcrypt.compare(
+    req.body.password_current,
+    user.password
+  );
+
+  if (!isCorrect) {
+    return next(new AppError('Your current password is wrong.', 401));
+  }
+
+  // 3) HASH new password (required)
+  const hashedPassword = await bcrypt.hash(req.body.password, 12);
+
+  // 4) Update password + timestamp
+  await pool.query(
+    `
+    UPDATE users
+    SET password = $1,
+        password_changed_at = NOW()
+    WHERE id = $2
+    `,
+    [hashedPassword, user.id]
+  );
+
+  // 5) Send new JWT
+  createSendToken({ id: user.id }, 200, res);
 });
