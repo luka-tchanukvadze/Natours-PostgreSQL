@@ -64,14 +64,6 @@ const createPasswordResetToken = () => {
   return { resetToken, hashedToken, expires };
 };
 
-userSchema.pre('save', function (next) {
-  if (!this.isModified('password') || this.isNew) return next();
-
-  this.password_changed_at = Date.now() - 1000;
-
-  next();
-});
-
 //////////////////////////////////
 //////////////////////////////////
 
