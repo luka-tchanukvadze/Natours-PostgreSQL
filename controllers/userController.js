@@ -2,36 +2,43 @@ const pool = require('./../db');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 
+//////////////////////////////////
+//////// filter helper //////////
+//////////////////////////////////
+
 const filterObj = (obj, ...allowedFields) => {
   const newObj = {};
   Object.keys(obj).forEach((el) => {
     if (allowedFields.includes(el)) newObj[el] = obj[el];
   });
-
   return newObj;
 };
 
+//////////////////////////////////
+//////// HTTP controllers ////////
+//////////////////////////////////
+
+// GET ALL USERS (only active users)
 exports.getAllUsers = catchAsync(async (req, res, next) => {
   const sql = `
     SELECT id, name, email, photo, role, active
     FROM users
+    WHERE active = TRUE
   `;
   const result = await pool.query(sql);
 
   if (!result.rows.length) {
     return res.status(404).json({
       status: 'fail',
-      message: 'No users',
+      message: 'No active users',
     });
   }
-
-  const users = result.rows;
 
   res.status(200).json({
     status: 'success',
     results: result.rows.length,
     data: {
-      users,
+      users: result.rows,
     },
   });
 });
@@ -98,6 +105,22 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     data: {
       user: updatedUser,
     },
+  });
+});
+
+exports.deleteMe = catchAsync(async (req, res, next) => {
+  const sql = `
+    UPDATE users
+    SET active = FALSE
+    WHERE id = $1
+    RETURNING id
+  `;
+
+  await pool.query(sql, [req.user.id]);
+
+  res.status(204).json({
+    status: 'success',
+    data: null,
   });
 });
 
