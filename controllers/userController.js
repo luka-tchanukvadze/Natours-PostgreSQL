@@ -2,6 +2,15 @@ const pool = require('./../db');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 
+const filterObj = (obj, ...allowedFields) => {
+  const newObj = {};
+  Object.keys(obj).forEach((el) => {
+    if (allowedFields.includes(el)) newObj[el] = obj[el];
+  });
+
+  return newObj;
+};
+
 exports.getAllUsers = catchAsync(async (req, res, next) => {
   const sql = `
     SELECT id, name, email, photo, role, active
@@ -28,7 +37,7 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
 });
 
 exports.updateMe = catchAsync(async (req, res, next) => {
-  // 1) Create error if user POSTs password data
+  // 1) Prevent password updates on this route
   if (req.body.password || req.body.password_confirm) {
     return next(
       new AppError(
@@ -38,9 +47,36 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     );
   }
 
-  // 2) Update user document
+  // 2) Filter only allowed fields
+  const filteredBody = filterObj(req.body, 'name', 'email');
+
+  // 3) Build dynamic SQL for allowed fields
+  const setClause = Object.keys(filteredBody)
+    .map((key, idx) => `${key} = $${idx + 1}`)
+    .join(', ');
+
+  if (!setClause) {
+    return next(new AppError('No valid fields provided to update.', 400));
+  }
+
+  const values = Object.values(filteredBody);
+  values.push(req.user.id); // for WHERE id = $n
+
+  const sql = `
+    UPDATE users
+    SET ${setClause}
+    WHERE id = $${values.length}
+    RETURNING id, name, email, photo, role, active
+  `;
+
+  const result = await pool.query(sql, values);
+  const updatedUser = result.rows[0];
+
   res.status(200).json({
     status: 'success',
+    data: {
+      user: updatedUser,
+    },
   });
 });
 
