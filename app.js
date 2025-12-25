@@ -10,10 +10,13 @@ const userRourter = require('./routes/userRoutes');
 const app = express();
 
 // 1) Global Middlewares
+
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
-app.use(express.json());
+
+// Set security HTTP headers
+app.use(helmet());
 
 const limiter = rateLimit({
   limit: 100,
@@ -21,6 +24,8 @@ const limiter = rateLimit({
   message: 'Too many requests from this IP, please try again in an hour!',
 });
 app.use('/api', limiter);
+
+app.use(express.json());
 
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
