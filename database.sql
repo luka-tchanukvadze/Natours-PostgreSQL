@@ -80,3 +80,19 @@ CREATE TABLE reviews (
 );
 
 
+
+CREATE TABLE bookings (
+  id SERIAL PRIMARY KEY,
+
+  tour_id INTEGER NOT NULL
+    REFERENCES tours(id) ON DELETE CASCADE,
+
+  user_id INTEGER NOT NULL
+    REFERENCES users(id) ON DELETE CASCADE,
+
+  price INTEGER NOT NULL,
+
+  created_at TIMESTAMP DEFAULT NOW(),
+
+  paid BOOLEAN DEFAULT TRUE
+);
