@@ -19,7 +19,27 @@ CREATE TABLE tours (
   images TEXT[],
 
   created_at TIMESTAMP DEFAULT NOW(),
-  start_dates TIMESTAMP[]
+  start_dates TIMESTAMP[],
+
+  slug VARCHAR(255),
+
+  difficulty VARCHAR(20) NOT NULL
+    CHECK (difficulty IN ('easy', 'medium', 'difficult')),
+
+  secret_tour BOOLEAN DEFAULT FALSE,
+
+  -- startLocation (GeoJSON)
+  start_location_type VARCHAR(10) DEFAULT 'Point'
+    CHECK (start_location_type = 'Point'),
+  start_location_coordinates NUMERIC[],
+  start_location_address TEXT,
+  start_location_description TEXT,
+
+  -- locations (array of embedded objects)
+  locations JSONB,
+
+  -- guides (user references)
+  guides INTEGER[]
 );
 
 CREATE TABLE users (
