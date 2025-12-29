@@ -59,4 +59,24 @@ CREATE TABLE users (
     active BOOLEAN DEFAULT TRUE
 );
 
+CREATE TABLE reviews (
+  id SERIAL PRIMARY KEY,
+
+  review TEXT NOT NULL,
+
+  rating INTEGER
+    CHECK (rating BETWEEN 1 AND 5),
+
+  created_at TIMESTAMP DEFAULT NOW(),
+
+  tour_id INTEGER NOT NULL
+    REFERENCES tours(id) ON DELETE CASCADE,
+
+  user_id INTEGER NOT NULL
+    REFERENCES users(id) ON DELETE CASCADE,
+
+  -- one review per user per tour
+  UNIQUE (tour_id, user_id)
+);
+
 
