@@ -51,19 +51,31 @@ exports.createTour = catchAsync(async (req, res, next) => {
     rating,
     ratings_quantity,
     price,
+    price_discount,
     summary,
     description,
     image_cover,
     images,
     start_dates,
+    slug,
+    difficulty,
+    secret_tour,
+    start_location_type,
+    start_location_coordinates,
+    start_location_address,
+    start_location_description,
+    locations,
+    guides,
   } = req.body;
 
   const sql = `
       INSERT INTO tours (
-        name, duration, max_group_size, rating, ratings_quantity, price,
-        summary, description, image_cover, images, start_dates
+        name, duration, max_group_size, rating, ratings_quantity, price, price_discount,
+        summary, description, image_cover, images, start_dates, slug, difficulty,
+        secret_tour, start_location_type, start_location_coordinates, 
+        start_location_address, start_location_description, locations, guides
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
       ) RETURNING *
     `;
 
@@ -74,20 +86,31 @@ exports.createTour = catchAsync(async (req, res, next) => {
     rating || 4.5,
     ratings_quantity || 0,
     price,
+    price_discount || 0,
     summary,
     description,
     image_cover,
     images || [],
     start_dates || [],
+    slug,
+    difficulty,
+    secret_tour || false,
+    start_location_type || 'Point',
+    start_location_coordinates,
+    start_location_address,
+    start_location_description,
+    JSON.stringify(locations), // Convert JS array/obj to JSON string for JSONB
+    guides || [],
   ];
 
   const result = await pool.query(sql, values);
   const newTour = result.rows[0];
 
-  res.status(200).json({
+  res.status(201).json({
+    // Changed to 201 for Created
     status: 'success',
     data: {
-      tours: newTour,
+      tour: newTour,
     },
   });
 });
