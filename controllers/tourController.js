@@ -3,6 +3,8 @@ const APIFeatures = require('./../utils/apiFeatures');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 
+const factory = require('./handlerFactory');
+
 exports.aliasTopTours = (req, res, next) => {
   req.query.limit = '2';
   (req.query.sort = '-rating, price'),
@@ -162,22 +164,23 @@ exports.updateTour = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.deleteTour = async (req, res, next) => {
-  const { id } = req.params;
+exports.deleteTour = factory.deleteOne('tours');
+// exports.deleteTour = catchAsync(async (req, res, next) => {
+//   const { id } = req.params;
 
-  const sql = `DELETE FROM tours WHERE id = $1`;
-  const values = [id];
-  const result = await pool.query(sql, values);
+//   const sql = `DELETE FROM tours WHERE id = $1`;
+//   const values = [id];
+//   const result = await pool.query(sql, values);
 
-  if (result.rowCount === 0) {
-    return next(new AppError(`No tour found with ID: ${id}`));
-  }
+//   if (result.rowCount === 0) {
+//     return next(new AppError(`No tour found with ID: ${id}`));
+//   }
 
-  res.status(200).json({
-    status: 'success',
-    message: 'Tour successfully deleted',
-  });
-};
+//   res.status(200).json({
+//     status: 'success',
+//     message: 'Tour successfully deleted',
+//   });
+// });
 
 exports.getTourStats = catchAsync(async (req, res, next) => {
   const sql = `
