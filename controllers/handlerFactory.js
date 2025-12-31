@@ -2,20 +2,25 @@ const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 const pool = require('./../db');
 
-exports.deleteOne = (Model) =>
+const ALLOWED_TABLES = ['tours', 'reviews', 'users'];
+
+exports.deleteOne = (table) =>
   catchAsync(async (req, res, next) => {
-    const { id } = req.params;
-
-    const sql = `DELETE FROM ${Model} WHERE id = $1`;
-    const values = [id];
-    const result = await pool.query(sql, values);
-
-    if (result.rowCount === 0) {
-      return next(new AppError(`No document found with ID: ${id}`));
+    if (!ALLOWED_TABLES.includes(table)) {
+      return next(new AppError('Invalid table name', 400));
     }
 
-    res.status(200).json({
+    const sql = `DELETE FROM ${table} WHERE id = $1`;
+    const result = await pool.query(sql, [req.params.id]);
+
+    if (result.rowCount === 0) {
+      return next(
+        new AppError(`No document found with ID: ${req.params.id}`, 404)
+      );
+    }
+
+    res.status(204).json({
       status: 'success',
-      message: `delted one from ${Model} successfully `,
+      data: null,
     });
   });
