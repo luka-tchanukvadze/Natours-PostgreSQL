@@ -1,6 +1,7 @@
 const express = require('express');
 const reviewController = require('./../controllers/reviewController');
 const authController = require('./../controllers/authController');
+const factory = require('./../controllers/handlerFactory');
 
 const router = express.Router({
   mergeParams: true,
@@ -21,6 +22,6 @@ router
   .route('/:id')
   .get(reviewController.getReview)
   .patch(reviewController.updateReview)
-  .delete(reviewController.deleteReview);
+  .delete(factory.deleteOne('reviews'));
 
 module.exports = router;

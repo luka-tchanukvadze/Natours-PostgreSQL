@@ -134,35 +134,36 @@ exports.getTour = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.updateTour = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-  const { name, rating, price } = req.body;
+exports.updateTour = factory.updateOne('tours', ['name', 'rating', 'price']);
+// exports.updateTour = catchAsync(async (req, res, next) => {
+//   const { id } = req.params;
+//   const { name, rating, price } = req.body;
 
-  const sql = `
-      UPDATE tours
-      SET 
-        name   = COALESCE($1, name),
-        rating = COALESCE($2, rating),
-        price  = COALESCE($3, price)
-      WHERE id = $4
-      RETURNING *;
-    `;
-  const values = [name, rating, price, id];
-  const result = await pool.query(sql, values);
+//   const sql = `
+//       UPDATE tours
+//       SET
+//         name   = COALESCE($1, name),
+//         rating = COALESCE($2, rating),
+//         price  = COALESCE($3, price)
+//       WHERE id = $4
+//       RETURNING *;
+//     `;
+//   const values = [name, rating, price, id];
+//   const result = await pool.query(sql, values);
 
-  const updatedTour = result.rows[0];
+//   const updatedTour = result.rows[0];
 
-  if (!updatedTour) {
-    return next(new AppError(`No tour found with ID: ${id}`));
-  }
+//   if (!updatedTour) {
+//     return next(new AppError(`No tour found with ID: ${id}`));
+//   }
 
-  res.status(200).json({
-    status: 'success',
-    data: {
-      tour: updatedTour,
-    },
-  });
-});
+//   res.status(200).json({
+//     status: 'success',
+//     data: {
+//       tour: updatedTour,
+//     },
+//   });
+// });
 
 exports.deleteTour = factory.deleteOne('tours');
 // exports.deleteTour = catchAsync(async (req, res, next) => {
