@@ -84,30 +84,31 @@ exports.createReview = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.updateReview = catchAsync(async (req, res, next) => {
-  const { review, rating } = req.body;
+exports.updateReview = factory.updateOne('reviews', ['review', 'rating']);
+// exports.updateReview = catchAsync(async (req, res, next) => {
+//   const { review, rating } = req.body;
 
-  const sql = `
-    UPDATE reviews
-    SET
-      review = COALESCE($1, review),
-      rating = COALESCE($2, rating)
-    WHERE id = $3
-    RETURNING *
-  `;
+//   const sql = `
+//     UPDATE reviews
+//     SET
+//       review = COALESCE($1, review),
+//       rating = COALESCE($2, rating)
+//     WHERE id = $3
+//     RETURNING *
+//   `;
 
-  const result = await pool.query(sql, [review, rating, req.params.id]);
+//   const result = await pool.query(sql, [review, rating, req.params.id]);
 
-  if (!result.rows[0]) {
-    return next(new AppError('No review found with that ID', 404));
-  }
+//   if (!result.rows[0]) {
+//     return next(new AppError('No review found with that ID', 404));
+//   }
 
-  res.status(200).json({
-    status: 'success',
-    data: {
-      review: result.rows[0],
-    },
-  });
-});
+//   res.status(200).json({
+//     status: 'success',
+//     data: {
+//       review: result.rows[0],
+//     },
+//   });
+// });
 
 exports.deleteReview = factory.deleteOne('reviews');
