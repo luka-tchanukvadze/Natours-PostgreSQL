@@ -76,3 +76,50 @@ exports.updateOne = (table, allowedFields = []) =>
       },
     });
   });
+
+exports.createOne = (table, allowedFields) =>
+  catchAsync(async (req, res, next) => {
+    // 1) Protect against SQL injection via table name
+    if (!ALLOWED_TABLES.includes(table)) {
+      return next(new AppError('Invalid table name', 400));
+    }
+
+    // 2) Pick only allowed fields from req.body
+    const data = {};
+    allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        data[field] = req.body[field];
+      }
+    });
+
+    if (Object.keys(data).length === 0) {
+      return next(new AppError('No valid fields provided', 400));
+    }
+
+    // 3) Build INSERT query dynamically
+    // columns → name, price
+    // placeholders → $1, $2
+    const columns = Object.keys(data).join(', ');
+    const placeholders = Object.keys(data)
+      .map((_, i) => `$${i + 1}`)
+      .join(', ');
+    const values = Object.values(data);
+
+    const sql = `
+      INSERT INTO ${table} (${columns})
+      VALUES (${placeholders})
+      RETURNING *
+    `;
+
+    // 4) Execute query
+    const result = await pool.query(sql, values);
+    const doc = result.rows[0];
+
+    // 5) Response (singular key: tours → tour)
+    res.status(201).json({
+      status: 'success',
+      data: {
+        [table.slice(0, -1)]: doc,
+      },
+    });
+  });
