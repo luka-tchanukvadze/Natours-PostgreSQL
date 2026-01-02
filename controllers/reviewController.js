@@ -65,24 +65,31 @@ exports.getReview = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createReview = catchAsync(async (req, res, next) => {
-  const { review, rating, tour_id, user_id } = req.body;
+exports.createReview = factory.createOne('reviews', [
+  'review',
+  'rating',
+  'tour_id',
+  'user_id',
+]);
 
-  const sql = `
-    INSERT INTO reviews (review, rating, tour_id, user_id)
-    VALUES ($1, $2, $3, $4)
-    RETURNING *
-  `;
+// exports.createReview = catchAsync(async (req, res, next) => {
+//   const { review, rating, tour_id, user_id } = req.body;
 
-  const result = await pool.query(sql, [review, rating, tour_id, user_id]);
+//   const sql = `
+//     INSERT INTO reviews (review, rating, tour_id, user_id)
+//     VALUES ($1, $2, $3, $4)
+//     RETURNING *
+//   `;
 
-  res.status(201).json({
-    status: 'success',
-    data: {
-      review: result.rows[0],
-    },
-  });
-});
+//   const result = await pool.query(sql, [review, rating, tour_id, user_id]);
+
+//   res.status(201).json({
+//     status: 'success',
+//     data: {
+//       review: result.rows[0],
+//     },
+//   });
+// });
 
 exports.updateReview = factory.updateOne('reviews', ['review', 'rating']);
 // exports.updateReview = catchAsync(async (req, res, next) => {

@@ -45,77 +45,102 @@ exports.getAllTours = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createTour = catchAsync(async (req, res, next) => {
-  const {
-    name,
-    duration,
-    max_group_size,
-    rating,
-    ratings_quantity,
-    price,
-    price_discount,
-    summary,
-    description,
-    image_cover,
-    images,
-    start_dates,
-    slug,
-    difficulty,
-    secret_tour,
-    start_location_type,
-    start_location_coordinates,
-    start_location_address,
-    start_location_description,
-    locations,
-    guides,
-  } = req.body;
+// controllers/tourController.js
+exports.createTour = factory.createOne('tours', [
+  'name',
+  'duration',
+  'max_group_size',
+  'rating',
+  'ratings_quantity',
+  'price',
+  'price_discount',
+  'summary',
+  'description',
+  'image_cover',
+  'images',
+  'start_dates',
+  'slug',
+  'difficulty',
+  'secret_tour',
+  'start_location_type',
+  'start_location_coordinates',
+  'start_location_address',
+  'start_location_description',
+  'locations',
+  'guides',
+]);
 
-  const sql = `
-      INSERT INTO tours (
-        name, duration, max_group_size, rating, ratings_quantity, price, price_discount,
-        summary, description, image_cover, images, start_dates, slug, difficulty,
-        secret_tour, start_location_type, start_location_coordinates, 
-        start_location_address, start_location_description, locations, guides
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
-      ) RETURNING *
-    `;
+// exports.createTour = catchAsync(async (req, res, next) => {
+//   const {
+//     name,
+//     duration,
+//     max_group_size,
+//     rating,
+//     ratings_quantity,
+//     price,
+//     price_discount,
+//     summary,
+//     description,
+//     image_cover,
+//     images,
+//     start_dates,
+//     slug,
+//     difficulty,
+//     secret_tour,
+//     start_location_type,
+//     start_location_coordinates,
+//     start_location_address,
+//     start_location_description,
+//     locations,
+//     guides,
+//   } = req.body;
 
-  const values = [
-    name,
-    duration,
-    max_group_size,
-    rating || 4.5,
-    ratings_quantity || 0,
-    price,
-    price_discount || 0,
-    summary,
-    description,
-    image_cover,
-    images || [],
-    start_dates || [],
-    slug,
-    difficulty,
-    secret_tour || false,
-    start_location_type || 'Point',
-    start_location_coordinates,
-    start_location_address,
-    start_location_description,
-    JSON.stringify(locations), // Convert JS array/obj to JSON string for JSONB
-    guides || [],
-  ];
+//   const sql = `
+//       INSERT INTO tours (
+//         name, duration, max_group_size, rating, ratings_quantity, price, price_discount,
+//         summary, description, image_cover, images, start_dates, slug, difficulty,
+//         secret_tour, start_location_type, start_location_coordinates,
+//         start_location_address, start_location_description, locations, guides
+//       ) VALUES (
+//         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
+//       ) RETURNING *
+//     `;
 
-  const result = await pool.query(sql, values);
-  const newTour = result.rows[0];
+//   const values = [
+//     name,
+//     duration,
+//     max_group_size,
+//     rating || 4.5,
+//     ratings_quantity || 0,
+//     price,
+//     price_discount || 0,
+//     summary,
+//     description,
+//     image_cover,
+//     images || [],
+//     start_dates || [],
+//     slug,
+//     difficulty,
+//     secret_tour || false,
+//     start_location_type || 'Point',
+//     start_location_coordinates,
+//     start_location_address,
+//     start_location_description,
+//     JSON.stringify(locations), // Convert JS array/obj to JSON string for JSONB
+//     guides || [],
+//   ];
 
-  res.status(201).json({
-    // Changed to 201 for Created
-    status: 'success',
-    data: {
-      tour: newTour,
-    },
-  });
-});
+//   const result = await pool.query(sql, values);
+//   const newTour = result.rows[0];
+
+//   res.status(201).json({
+//     // Changed to 201 for Created
+//     status: 'success',
+//     data: {
+//       tour: newTour,
+//     },
+//   });
+// });
 
 exports.getTour = catchAsync(async (req, res, next) => {
   const { id } = req.params;
