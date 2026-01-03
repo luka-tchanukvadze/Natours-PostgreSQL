@@ -45,30 +45,33 @@ exports.getAllTours = catchAsync(async (req, res, next) => {
   });
 });
 
-// controllers/tourController.js
-exports.createTour = factory.createOne('tours', [
-  'name',
-  'duration',
-  'max_group_size',
-  'rating',
-  'ratings_quantity',
-  'price',
-  'price_discount',
-  'summary',
-  'description',
-  'image_cover',
-  'images',
-  'start_dates',
-  'slug',
-  'difficulty',
-  'secret_tour',
-  'start_location_type',
-  'start_location_coordinates',
-  'start_location_address',
-  'start_location_description',
-  'locations',
-  'guides',
-]);
+exports.createTour = factory.createOne(
+  'tours',
+  [
+    'name',
+    'duration',
+    'max_group_size',
+    'rating',
+    'ratings_quantity',
+    'price',
+    'price_discount',
+    'summary',
+    'description',
+    'image_cover',
+    'images',
+    'start_dates',
+    'slug',
+    'difficulty',
+    'secret_tour',
+    'start_location_type',
+    'start_location_coordinates',
+    'start_location_address',
+    'start_location_description',
+    'locations',
+    'guides',
+  ],
+  ['locations'] // JSONB fields only
+);
 
 // exports.createTour = catchAsync(async (req, res, next) => {
 //   const {

@@ -77,40 +77,45 @@ exports.updateOne = (table, allowedFields = []) =>
     });
   });
 
-exports.createOne = (table, allowedFields = []) =>
+exports.createOne = (table, allowedFields = [], jsonbFields = []) =>
   catchAsync(async (req, res, next) => {
-    // 1) Filter only allowed fields
     const data = {};
+
     allowedFields.forEach((field) => {
-      if (req.body[field] !== undefined) data[field] = req.body[field];
+      if (req.body[field] !== undefined) {
+        data[field] = req.body[field];
+      }
     });
 
     if (Object.keys(data).length === 0) {
       return next(new AppError('No valid fields provided', 400));
     }
 
-    // 2) Build dynamic SQL
     const columns = Object.keys(data).join(', ');
     const placeholders = Object.keys(data)
       .map((_, i) => `$${i + 1}`)
       .join(', ');
 
-    // 3) Convert arrays/objects to JSON strings for JSONB fields
-    const values = Object.values(data).map((val) =>
-      Array.isArray(val) || typeof val === 'object' ? JSON.stringify(val) : val
-    );
+    const values = Object.entries(data).map(([key, val]) => {
+      // stringify ONLY JSONB columns
+      if (jsonbFields.includes(key)) {
+        return JSON.stringify(val);
+      }
+      return val; // arrays stay arrays
+    });
 
-    const sql = `INSERT INTO ${table} (${columns}) VALUES (${placeholders}) RETURNING *`;
+    const sql = `
+      INSERT INTO ${table} (${columns})
+      VALUES (${placeholders})
+      RETURNING *;
+    `;
 
-    // 4) Execute
     const result = await pool.query(sql, values);
-    const doc = result.rows[0];
 
-    // 5) Send response
     res.status(201).json({
       status: 'success',
       data: {
-        [table.slice(0, -1)]: doc, // tours -> tour
+        [table.slice(0, -1)]: result.rows[0],
       },
     });
   });
