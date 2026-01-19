@@ -1,41 +1,40 @@
 class APIFeatures {
-  constructor(table, queryString) {
+  constructor(table, queryString, select = '*') {
     this.table = table;
     this.queryString = queryString;
-    this.sql = `SELECT * FROM ${this.table}`;
+    this.select = select;
+    this.sql = `SELECT ${this.select} FROM ${this.table}`;
     this.values = [];
-    this.index = 1;
   }
 
   filter() {
     const queryObj = { ...this.queryString };
-    const excluded = ['page', 'sort', 'limit', 'fields'];
-    excluded.forEach((f) => delete queryObj[f]);
+    const excludedFields = ['page', 'sort', 'limit', 'fields'];
+    excludedFields.forEach((el) => delete queryObj[el]);
 
-    let conditions = [];
+    const conditions = [];
 
-    for (const key in queryObj) {
-      const value = queryObj[key];
+    for (const field in queryObj) {
+      if (typeof queryObj[field] === 'object') {
+        for (const operator in queryObj[field]) {
+          const sqlOperatorMap = {
+            gte: '>=',
+            gt: '>',
+            lte: '<=',
+            lt: '<',
+          };
 
-      if (typeof value === 'object') {
-        const operatorMap = { gte: '>=', gt: '>', lte: '<=', lt: '<' };
-        for (const op in value) {
-          const operator = operatorMap[op];
-          if (!operator) continue;
+          const sqlOperator = sqlOperatorMap[operator];
+          const value = queryObj[field][operator];
 
-          conditions.push(`${key} ${operator} $${this.index}`);
-          this.values.push(value[op]);
-          this.index++;
+          this.values.push(value);
+          conditions.push(`${field} ${sqlOperator} $${this.values.length}`);
         }
-      } else {
-        conditions.push(`${key} = $${this.index}`);
-        this.values.push(value);
-        this.index++;
       }
     }
 
-    if (conditions.length > 0) {
-      this.sql += ' WHERE ' + conditions.join(' AND ');
+    if (conditions.length) {
+      this.sql += ` WHERE ${conditions.join(' AND ')}`;
     }
 
     return this;
