@@ -163,3 +163,32 @@ exports.getOne = (table, options = {}) =>
       },
     });
   });
+
+exports.getAll = (table, options = {}) =>
+  catchAsync(async (req, res, next) => {
+    if (!ALLOWED_TABLES.includes(table)) {
+      return next(new AppError('Invalid table name', 400));
+    }
+
+    const select = options.select?.length > 0 ? options.select.join(', ') : '*';
+
+    const features = new APIFeatures(table, req.query, select)
+      .filter()
+      .sort()
+      .fields()
+      .paginate();
+
+    const result = await pool.query(features.sql, features.values);
+
+    if (result.rows.length === 0 && req.query.page > 1) {
+      return next(new AppError('This page does not exist', 404));
+    }
+
+    res.status(200).json({
+      status: 'success',
+      results: result.rows.length,
+      data: {
+        [table]: result.rows,
+      },
+    });
+  });

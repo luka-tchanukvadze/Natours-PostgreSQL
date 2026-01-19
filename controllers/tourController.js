@@ -20,29 +20,35 @@ function addVirstuals(tour) {
   };
 }
 
-exports.getAllTours = catchAsync(async (req, res, next) => {
-  const features = new APIFeatures('tours', req.query)
-    .filter()
-    .sort()
-    .fields()
-    .paginate();
+// exports.getAllTours = catchAsync(async (req, res, next) => {
+//   const features = new APIFeatures('tours', req.query)
+//     .filter()
+//     .sort()
+//     .fields()
+//     .paginate();
 
-  const result = await pool.query(features.sql, features.values);
+//   const result = await pool.query(features.sql, features.values);
 
-  if (result.rows.length === 0 && req.query.page > 1) {
-    return res.status(404).json({
-      status: 'fail',
-      message: 'This page does not exist',
-    });
-  }
+//   if (result.rows.length === 0 && req.query.page > 1) {
+//     return res.status(404).json({
+//       status: 'fail',
+//       message: 'This page does not exist',
+//     });
+//   }
 
-  const toursWithVirtuals = result.rows.map(addVirstuals);
+//   const toursWithVirtuals = result.rows.map(addVirstuals);
 
-  res.status(200).json({
-    status: 'success',
-    results: result.rows.length,
-    data: { tours: toursWithVirtuals },
-  });
+//   res.status(200).json({
+//     status: 'success',
+//     results: result.rows.length,
+//     data: { tours: toursWithVirtuals },
+//   });
+// });
+exports.getAllTours = factory.getAll('tours', {
+  virtuals: (tour) => ({
+    ...tour,
+    duration_in_weeks: tour.duration / 7,
+  }),
 });
 
 exports.createTour = factory.createOne(

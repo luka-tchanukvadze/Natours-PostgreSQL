@@ -1,6 +1,7 @@
 const pool = require('./../db');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
+const factory = require('./handlerFactory');
 
 //////////////////////////////////
 //////// filter helper //////////
@@ -19,6 +20,11 @@ const filterObj = (obj, ...allowedFields) => {
 //////////////////////////////////
 
 // GET ALL USERS (only active users)
+
+// exports.getAllUsers = factory.getAll('users', {
+//   select: ['id', 'name', 'email', 'photo', 'role', 'active'],
+// });
+
 exports.getAllUsers = catchAsync(async (req, res, next) => {
   const sql = `
     SELECT id, name, email, photo, role, active
