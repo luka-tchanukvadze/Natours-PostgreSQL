@@ -118,4 +118,6 @@ exports.updateReview = factory.updateOne('reviews', ['review', 'rating']);
 //   });
 // });
 
+exports.getReview = factory.getOne('reviews');
+
 exports.deleteReview = factory.deleteOne('reviews');

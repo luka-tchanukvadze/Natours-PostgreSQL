@@ -7,8 +7,8 @@ const factory = require('./handlerFactory');
 
 exports.aliasTopTours = (req, res, next) => {
   req.query.limit = '2';
-  (req.query.sort = '-rating, price'),
-    (req.fields = 'name,price,rating,summary,difficulty');
+  ((req.query.sort = '-rating, price'),
+    (req.fields = 'name,price,rating,summary,difficulty'));
 
   next();
 };
@@ -70,7 +70,7 @@ exports.createTour = factory.createOne(
     'locations',
     'guides',
   ],
-  ['locations'] // JSONB fields only
+  ['locations'], // JSONB fields only
 );
 
 // exports.createTour = catchAsync(async (req, res, next) => {
@@ -145,22 +145,7 @@ exports.createTour = factory.createOne(
 //   });
 // });
 
-exports.getTour = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-  const sql = 'SELECT * FROM tours WHERE id = $1';
-  const value = [id];
-  const result = await pool.query(sql, value);
-  const tour = result.rows[0];
-
-  if (!tour) {
-    return next(new AppError(`No tour found with ID: ${id}`));
-  }
-
-  res.status(200).json({
-    status: 'success',
-    data: tour,
-  });
-});
+exports.getTour = factory.getOne('tours', { path: 'reviews' });
 
 exports.updateTour = factory.updateOne('tours', ['name', 'rating', 'price']);
 // exports.updateTour = catchAsync(async (req, res, next) => {

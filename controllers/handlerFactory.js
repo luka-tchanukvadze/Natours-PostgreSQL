@@ -1,6 +1,7 @@
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 const pool = require('./../db');
+const APIFeatures = require('./../utils/apiFeatures');
 
 const ALLOWED_TABLES = ['tours', 'reviews', 'users'];
 
@@ -15,7 +16,7 @@ exports.deleteOne = (table) =>
 
     if (result.rowCount === 0) {
       return next(
-        new AppError(`No document found with ID: ${req.params.id}`, 404)
+        new AppError(`No document found with ID: ${req.params.id}`, 404),
       );
     }
 
@@ -64,7 +65,7 @@ exports.updateOne = (table, allowedFields = []) =>
 
     if (!doc) {
       return next(
-        new AppError(`No document found with ID: ${req.params.id}`, 404)
+        new AppError(`No document found with ID: ${req.params.id}`, 404),
       );
     }
 
@@ -116,6 +117,49 @@ exports.createOne = (table, allowedFields = [], jsonbFields = []) =>
       status: 'success',
       data: {
         [table.slice(0, -1)]: result.rows[0],
+      },
+    });
+  });
+
+exports.getOne = (table, options = {}) =>
+  catchAsync(async (req, res, next) => {
+    if (!ALLOWED_TABLES.includes(table)) {
+      return next(new AppError('Invalid table name', 400));
+    }
+
+    const { id } = req.params;
+    let doc;
+    let sql = `SELECT * FROM ${table} WHERE id = $1`;
+
+    // 1) Get main document
+    const result = await pool.query(sql, [id]);
+    doc = result.rows[0];
+
+    if (!doc) {
+      return next(new AppError(`No document found with ID: ${id}`, 404));
+    }
+
+    // 2) Populate (Postgres-style)
+    if (options.path === 'reviews' && table === 'tours') {
+      const reviewsSql = `
+        SELECT
+          r.*,
+          u.name AS user_name,
+          u.photo AS user_photo
+        FROM reviews r
+        JOIN users u ON r.user_id = u.id
+        WHERE r.tour_id = $1
+      `;
+
+      const reviewsResult = await pool.query(reviewsSql, [id]);
+      doc.reviews = reviewsResult.rows;
+    }
+
+    // 3) Send response
+    res.status(200).json({
+      status: 'success',
+      data: {
+        [table.slice(0, -1)]: doc, // tours -> tour
       },
     });
   });
