@@ -77,7 +77,7 @@ exports.tourSchema = z
           address: z.string().optional(),
           description: z.string().optional(),
           day: z.number().int().optional(),
-        })
+        }),
       )
       .optional(),
 
@@ -91,5 +91,5 @@ exports.tourSchema = z
     {
       message: 'Discount price must be lower than the price',
       path: ['price_discount'],
-    }
+    },
   );
