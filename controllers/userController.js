@@ -49,6 +49,11 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getMe = (req, res, next) => {
+  req.params.id = req.user.id;
+  next();
+};
+
 exports.updateMe = catchAsync(async (req, res, next) => {
   // 1) Prevent password updates on this route
   // This route is only for updating name/email, not password.
@@ -137,12 +142,26 @@ exports.createUser = (req, res) => {
   });
 };
 
-exports.getUser = (req, res) => {
-  res.status(500).json({
-    status: 'error',
-    message: 'This route is not yet defined',
+exports.getUser = catchAsync(async (req, res, next) => {
+  const sql = `
+    SELECT id, name, email, photo, role, active
+    FROM users
+    WHERE id = $1
+  `;
+
+  const result = await pool.query(sql, [req.params.id]);
+
+  if (!result.rows[0]) {
+    return next(new AppError('User not found', 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user: result.rows[0],
+    },
   });
-};
+});
 
 exports.updateUser = (req, res) => {
   res.status(500).json({
