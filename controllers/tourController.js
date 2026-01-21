@@ -13,37 +13,6 @@ exports.aliasTopTours = (req, res, next) => {
   next();
 };
 
-function addVirstuals(tour) {
-  return {
-    ...tour,
-    duration_in_weeks: tour.duration / 7,
-  };
-}
-
-// exports.getAllTours = catchAsync(async (req, res, next) => {
-//   const features = new APIFeatures('tours', req.query)
-//     .filter()
-//     .sort()
-//     .fields()
-//     .paginate();
-
-//   const result = await pool.query(features.sql, features.values);
-
-//   if (result.rows.length === 0 && req.query.page > 1) {
-//     return res.status(404).json({
-//       status: 'fail',
-//       message: 'This page does not exist',
-//     });
-//   }
-
-//   const toursWithVirtuals = result.rows.map(addVirstuals);
-
-//   res.status(200).json({
-//     status: 'success',
-//     results: result.rows.length,
-//     data: { tours: toursWithVirtuals },
-//   });
-// });
 exports.getAllTours = factory.getAll('tours', {
   virtuals: (tour) => ({
     ...tour,
@@ -78,129 +47,9 @@ exports.createTour = factory.createOne(
   ],
   ['locations'], // JSONB fields only
 );
-
-// exports.createTour = catchAsync(async (req, res, next) => {
-//   const {
-//     name,
-//     duration,
-//     max_group_size,
-//     rating,
-//     ratings_quantity,
-//     price,
-//     price_discount,
-//     summary,
-//     description,
-//     image_cover,
-//     images,
-//     start_dates,
-//     slug,
-//     difficulty,
-//     secret_tour,
-//     start_location_type,
-//     start_location_coordinates,
-//     start_location_address,
-//     start_location_description,
-//     locations,
-//     guides,
-//   } = req.body;
-
-//   const sql = `
-//       INSERT INTO tours (
-//         name, duration, max_group_size, rating, ratings_quantity, price, price_discount,
-//         summary, description, image_cover, images, start_dates, slug, difficulty,
-//         secret_tour, start_location_type, start_location_coordinates,
-//         start_location_address, start_location_description, locations, guides
-//       ) VALUES (
-//         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
-//       ) RETURNING *
-//     `;
-
-//   const values = [
-//     name,
-//     duration,
-//     max_group_size,
-//     rating || 4.5,
-//     ratings_quantity || 0,
-//     price,
-//     price_discount || 0,
-//     summary,
-//     description,
-//     image_cover,
-//     images || [],
-//     start_dates || [],
-//     slug,
-//     difficulty,
-//     secret_tour || false,
-//     start_location_type || 'Point',
-//     start_location_coordinates,
-//     start_location_address,
-//     start_location_description,
-//     JSON.stringify(locations), // Convert JS array/obj to JSON string for JSONB
-//     guides || [],
-//   ];
-
-//   const result = await pool.query(sql, values);
-//   const newTour = result.rows[0];
-
-//   res.status(201).json({
-//     // Changed to 201 for Created
-//     status: 'success',
-//     data: {
-//       tour: newTour,
-//     },
-//   });
-// });
-
 exports.getTour = factory.getOne('tours', { path: 'reviews' });
-
 exports.updateTour = factory.updateOne('tours', ['name', 'rating', 'price']);
-// exports.updateTour = catchAsync(async (req, res, next) => {
-//   const { id } = req.params;
-//   const { name, rating, price } = req.body;
-
-//   const sql = `
-//       UPDATE tours
-//       SET
-//         name   = COALESCE($1, name),
-//         rating = COALESCE($2, rating),
-//         price  = COALESCE($3, price)
-//       WHERE id = $4
-//       RETURNING *;
-//     `;
-//   const values = [name, rating, price, id];
-//   const result = await pool.query(sql, values);
-
-//   const updatedTour = result.rows[0];
-
-//   if (!updatedTour) {
-//     return next(new AppError(`No tour found with ID: ${id}`));
-//   }
-
-//   res.status(200).json({
-//     status: 'success',
-//     data: {
-//       tour: updatedTour,
-//     },
-//   });
-// });
-
 exports.deleteTour = factory.deleteOne('tours');
-// exports.deleteTour = catchAsync(async (req, res, next) => {
-//   const { id } = req.params;
-
-//   const sql = `DELETE FROM tours WHERE id = $1`;
-//   const values = [id];
-//   const result = await pool.query(sql, values);
-
-//   if (result.rowCount === 0) {
-//     return next(new AppError(`No tour found with ID: ${id}`));
-//   }
-
-//   res.status(200).json({
-//     status: 'success',
-//     message: 'Tour successfully deleted',
-//   });
-// });
 
 exports.getTourStats = catchAsync(async (req, res, next) => {
   const sql = `
@@ -251,3 +100,169 @@ exports.getMonthlyPlan = catchAsync(async (req, res, next) => {
     data: result.rows,
   });
 });
+
+/*
+Before Factory Function
+
+function addVirstuals(tour) {
+  return {
+    ...tour,
+    duration_in_weeks: tour.duration / 7,
+  };
+}
+
+exports.getAllTours = catchAsync(async (req, res, next) => {
+  const features = new APIFeatures('tours', req.query)
+    .filter()
+    .sort()
+    .fields()
+    .paginate();
+
+  const result = await pool.query(features.sql, features.values);
+
+  if (result.rows.length === 0 && req.query.page > 1) {
+    return res.status(404).json({
+      status: 'fail',
+      message: 'This page does not exist',
+    });
+  }
+
+  const toursWithVirtuals = result.rows.map(addVirstuals);
+
+  res.status(200).json({
+    status: 'success',
+    results: result.rows.length,
+    data: { tours: toursWithVirtuals },
+  });
+});
+
+
+
+
+
+exports.createTour = catchAsync(async (req, res, next) => {
+  const {
+    name,
+    duration,
+    max_group_size,
+    rating,
+    ratings_quantity,
+    price,
+    price_discount,
+    summary,
+    description,
+    image_cover,
+    images,
+    start_dates,
+    slug,
+    difficulty,
+    secret_tour,
+    start_location_type,
+    start_location_coordinates,
+    start_location_address,
+    start_location_description,
+    locations,
+    guides,
+  } = req.body;
+
+  const sql = `
+      INSERT INTO tours (
+        name, duration, max_group_size, rating, ratings_quantity, price, price_discount,
+        summary, description, image_cover, images, start_dates, slug, difficulty,
+        secret_tour, start_location_type, start_location_coordinates,
+        start_location_address, start_location_description, locations, guides
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
+      ) RETURNING *
+    `;
+
+  const values = [
+    name,
+    duration,
+    max_group_size,
+    rating || 4.5,
+    ratings_quantity || 0,
+    price,
+    price_discount || 0,
+    summary,
+    description,
+    image_cover,
+    images || [],
+    start_dates || [],
+    slug,
+    difficulty,
+    secret_tour || false,
+    start_location_type || 'Point',
+    start_location_coordinates,
+    start_location_address,
+    start_location_description,
+    JSON.stringify(locations), // Convert JS array/obj to JSON string for JSONB
+    guides || [],
+  ];
+
+  const result = await pool.query(sql, values);
+  const newTour = result.rows[0];
+
+  res.status(201).json({
+    // Changed to 201 for Created
+    status: 'success',
+    data: {
+      tour: newTour,
+    },
+  });
+});
+
+
+
+
+exports.updateTour = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const { name, rating, price } = req.body;
+
+  const sql = `
+      UPDATE tours
+      SET
+        name   = COALESCE($1, name),
+        rating = COALESCE($2, rating),
+        price  = COALESCE($3, price)
+      WHERE id = $4
+      RETURNING *;
+    `;
+  const values = [name, rating, price, id];
+  const result = await pool.query(sql, values);
+
+  const updatedTour = result.rows[0];
+
+  if (!updatedTour) {
+    return next(new AppError(`No tour found with ID: ${id}`));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      tour: updatedTour,
+    },
+  });
+});
+
+
+
+
+exports.deleteTour = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+
+  const sql = `DELETE FROM tours WHERE id = $1`;
+  const values = [id];
+  const result = await pool.query(sql, values);
+
+  if (result.rowCount === 0) {
+    return next(new AppError(`No tour found with ID: ${id}`));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Tour successfully deleted',
+  });
+});
+
+*/
