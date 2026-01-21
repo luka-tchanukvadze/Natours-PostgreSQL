@@ -13,6 +13,16 @@ exports.setTourUserIds = (req, res, next) => {
   next();
 };
 
+exports.createReview = factory.createOne('reviews', [
+  'review',
+  'rating',
+  'tour_id',
+  'user_id',
+]);
+exports.updateReview = factory.updateOne('reviews', ['review', 'rating']);
+exports.getReview = factory.getOne('reviews');
+exports.deleteReview = factory.deleteOne('reviews');
+
 exports.getAllReviews = catchAsync(async (req, res, next) => {
   let sql = `
     SELECT
@@ -40,71 +50,18 @@ exports.getAllReviews = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getReview = catchAsync(async (req, res, next) => {
-  const sql = `
-    SELECT
-      r.*,
-      u.name AS user_name,
-      u.photo AS user_photo
-    FROM reviews r
-    JOIN users u ON r.user_id = u.id
-    WHERE r.id = $1
-  `;
-
-  const result = await pool.query(sql, [req.params.id]);
-
-  if (!result.rows[0]) {
-    return next(new AppError('No review found with that ID', 404));
-  }
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      review: result.rows[0],
-    },
-  });
-});
-
-exports.createReview = factory.createOne('reviews', [
-  'review',
-  'rating',
-  'tour_id',
-  'user_id',
-]);
-
-// exports.createReview = catchAsync(async (req, res, next) => {
-//   const { review, rating, tour_id, user_id } = req.body;
-
+// exports.getReview = catchAsync(async (req, res, next) => {
 //   const sql = `
-//     INSERT INTO reviews (review, rating, tour_id, user_id)
-//     VALUES ($1, $2, $3, $4)
-//     RETURNING *
+//     SELECT
+//       r.*,
+//       u.name AS user_name,
+//       u.photo AS user_photo
+//     FROM reviews r
+//     JOIN users u ON r.user_id = u.id
+//     WHERE r.id = $1
 //   `;
 
-//   const result = await pool.query(sql, [review, rating, tour_id, user_id]);
-
-//   res.status(201).json({
-//     status: 'success',
-//     data: {
-//       review: result.rows[0],
-//     },
-//   });
-// });
-
-exports.updateReview = factory.updateOne('reviews', ['review', 'rating']);
-// exports.updateReview = catchAsync(async (req, res, next) => {
-//   const { review, rating } = req.body;
-
-//   const sql = `
-//     UPDATE reviews
-//     SET
-//       review = COALESCE($1, review),
-//       rating = COALESCE($2, rating)
-//     WHERE id = $3
-//     RETURNING *
-//   `;
-
-//   const result = await pool.query(sql, [review, rating, req.params.id]);
+//   const result = await pool.query(sql, [req.params.id]);
 
 //   if (!result.rows[0]) {
 //     return next(new AppError('No review found with that ID', 404));
@@ -117,7 +74,3 @@ exports.updateReview = factory.updateOne('reviews', ['review', 'rating']);
 //     },
 //   });
 // });
-
-exports.getReview = factory.getOne('reviews');
-
-exports.deleteReview = factory.deleteOne('reviews');
