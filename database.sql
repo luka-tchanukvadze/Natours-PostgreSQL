@@ -41,6 +41,8 @@ CREATE TABLE tours (
   -- guides (user references)
   guides INTEGER[]
 );
+-- indexing tour slug
+CREATE UNIQUE INDEX idx_tours_slug ON tours(slug);
 
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
