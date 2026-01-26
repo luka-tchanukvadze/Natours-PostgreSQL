@@ -8,7 +8,7 @@ const factory = require('./handlerFactory');
 exports.aliasTopTours = (req, res, next) => {
   req.query.limit = '2';
   ((req.query.sort = '-rating, price'),
-    (req.fields = 'name,price,rating,summary,difficulty'));
+    (req.query.fields = 'name,price,rating,summary,difficulty'));
 
   next();
 };
