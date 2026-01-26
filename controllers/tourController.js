@@ -103,23 +103,46 @@ exports.getMonthlyPlan = catchAsync(async (req, res, next) => {
 
 // /tours-within/:distance/center/:latlng/unit/:unit
 // /tours-within/233/center/51.453789,-0.192270/unit/mi
+// /tours-within/:distance/center/:latlng/unit/:unit
 exports.getToursWithin = catchAsync(async (req, res, next) => {
   const { distance, latlng, unit } = req.params;
-  const [lat, lng] = latlng.split(',');
+  const [lat, lng] = latlng.split(',').map(Number);
 
   if (!lat || !lng) {
-    next(
+    return next(
       new AppError(
-        'Please provide latitude and longitude in the fomrmat, lat,lng.',
+        'Please provide latitude and longitude in the format lat,lng.',
         400,
       ),
     );
   }
 
-  console.log(distance, lat, lng, unit);
+  // Earth radius
+  const earthRadius = unit === 'mi' ? 3958.8 : 6371; // miles | km
+
+  const sql = `
+    SELECT *
+    FROM tours
+    WHERE (
+      ${earthRadius} * acos(
+        cos(radians($1)) *
+        cos(radians(start_location_coordinates[2])) *
+        cos(radians(start_location_coordinates[1]) - radians($2)) +
+        sin(radians($1)) *
+        sin(radians(start_location_coordinates[2]))
+      )
+    ) <= $3
+  `;
+
+  const values = [lat, lng, distance];
+  const result = await pool.query(sql, values);
 
   res.status(200).json({
     status: 'success',
+    results: result.rows.length,
+    data: {
+      tours: result.rows,
+    },
   });
 });
 
