@@ -101,6 +101,28 @@ exports.getMonthlyPlan = catchAsync(async (req, res, next) => {
   });
 });
 
+// /tours-within/:distance/center/:latlng/unit/:unit
+// /tours-within/233/center/51.453789,-0.192270/unit/mi
+exports.getToursWithin = catchAsync(async (req, res, next) => {
+  const { distance, latlng, unit } = req.params;
+  const [lat, lng] = latlng.split(',');
+
+  if (!lat || !lng) {
+    next(
+      new AppError(
+        'Please provide latitude and longitude in the fomrmat, lat,lng.',
+        400,
+      ),
+    );
+  }
+
+  console.log(distance, lat, lng, unit);
+
+  res.status(200).json({
+    status: 'success',
+  });
+});
+
 /*
 Before Factory Function
 
