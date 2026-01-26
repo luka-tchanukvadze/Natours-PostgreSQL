@@ -146,6 +146,50 @@ exports.getToursWithin = catchAsync(async (req, res, next) => {
   });
 });
 
+// /distances/:latlng/unit/:unit
+exports.getDistances = catchAsync(async (req, res, next) => {
+  const { latlng, unit } = req.params;
+  const [lat, lng] = latlng.split(',').map(Number);
+
+  if (!lat || !lng) {
+    return next(
+      new AppError(
+        'Please provide latitude and longitude in the format lat,lng.',
+        400,
+      ),
+    );
+  }
+
+  // Earth radius
+  const earthRadius = unit === 'mi' ? 3958.8 : 6371; // miles | km
+
+  const sql = `
+    SELECT
+      name,
+      (
+        ${earthRadius} * acos(
+          cos(radians($1)) *
+          cos(radians(start_location_coordinates[2])) *
+          cos(radians(start_location_coordinates[1]) - radians($2)) +
+          sin(radians($1)) *
+          sin(radians(start_location_coordinates[2]))
+        )
+      ) AS distance
+    FROM tours
+    ORDER BY distance ASC
+  `;
+
+  const values = [lat, lng];
+  const result = await pool.query(sql, values);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      data: result.rows,
+    },
+  });
+});
+
 /*
 Before Factory Function
 
