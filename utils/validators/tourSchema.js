@@ -80,7 +80,6 @@ exports.tourSchema = z
       .optional(),
 
     guides: z.array(z.number()).optional(),
-
     created_at: z.string().optional(),
   })
   .refine(
