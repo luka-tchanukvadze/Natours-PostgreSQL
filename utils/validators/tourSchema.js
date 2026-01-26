@@ -35,8 +35,6 @@ exports.tourSchema = z
 
     start_dates: z.array(z.string()).optional(),
 
-    // --- Added missing fields from PSQL Schema ---
-
     rating: z
       .number({ message: 'Rating must be a number' })
       .min(1, { message: 'Rating must be at least 1' })
