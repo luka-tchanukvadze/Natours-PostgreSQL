@@ -149,7 +149,7 @@ exports.login = catchAsync(async (req, res, next) => {
   delete user.password;
 
   // 3) If everything ok, send token to client
-  createSendToken(user, 200, res);
+  createSendToken(user, 200, req, res);
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -318,7 +318,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   );
 
   // 5) Log user in
-  createSendToken(user, 200, res);
+  createSendToken(user, 200, req, res);
 });
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
@@ -359,5 +359,5 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   );
 
   // 5) Send new JWT
-  createSendToken({ id: user.id }, 200, res);
+  createSendToken({ id: user.id }, 200, req, res);
 });
