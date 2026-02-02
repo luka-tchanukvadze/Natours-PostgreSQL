@@ -117,14 +117,14 @@ exports.getToursWithin = catchAsync(async (req, res, next) => {
     );
   }
 
-  // Earth radius
-  const earthRadius = unit === 'mi' ? 3958.8 : 6371; // miles | km
+  // Earth radius in miles or kilometers
+  const earthRadius = unit === 'mi' ? 3958.8 : 6371;
 
   const sql = `
     SELECT *
     FROM tours
     WHERE (
-      ${earthRadius} * acos(
+      $4 * acos(
         cos(radians($1)) *
         cos(radians(start_location_coordinates[2])) *
         cos(radians(start_location_coordinates[1]) - radians($2)) +
@@ -134,7 +134,7 @@ exports.getToursWithin = catchAsync(async (req, res, next) => {
     ) <= $3
   `;
 
-  const values = [lat, lng, distance];
+  const values = [lat, lng, distance, earthRadius];
   const result = await pool.query(sql, values);
 
   res.status(200).json({
@@ -160,14 +160,14 @@ exports.getDistances = catchAsync(async (req, res, next) => {
     );
   }
 
-  // Earth radius
-  const earthRadius = unit === 'mi' ? 3958.8 : 6371; // miles | km
+  // Earth radius in miles or kilometers
+  const earthRadius = unit === 'mi' ? 3958.8 : 6371;
 
   const sql = `
     SELECT
       name,
       (
-        ${earthRadius} * acos(
+        $3 * acos(
           cos(radians($1)) *
           cos(radians(start_location_coordinates[2])) *
           cos(radians(start_location_coordinates[1]) - radians($2)) +
@@ -179,7 +179,7 @@ exports.getDistances = catchAsync(async (req, res, next) => {
     ORDER BY distance ASC
   `;
 
-  const values = [lat, lng];
+  const values = [lat, lng, earthRadius];
   const result = await pool.query(sql, values);
 
   res.status(200).json({
