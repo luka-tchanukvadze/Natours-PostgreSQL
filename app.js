@@ -8,10 +8,16 @@ const tourRourter = require('./routes/tourRoutes');
 const userRourter = require('./routes/userRoutes');
 const reviewRourter = require('./routes/reviewRoutes');
 const helmet = require('helmet');
+const cors = require('cors');
 
 const app = express();
 
 // 1) Global Middlewares
+
+// Enable CORS for all origins
+// In production, I should restrict this to my frontend's domain:
+// app.use(cors({ origin: 'https://my-frontend-domain.com' }));
+app.use(cors());
 
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
@@ -27,7 +33,27 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-app.use(express.json());
+const hpp = require('hpp');
+const sanitizationMiddleware = require('./utils/sanitize');
+
+app.use(express.json({ limit: '10kb' })); // Limit body size
+
+// Data sanitization against XSS
+app.use(sanitizationMiddleware);
+
+// Prevent http parameter pollution
+app.use(
+  hpp({
+    whitelist: [
+      'duration',
+      'max_group_size',
+      'difficulty',
+      'rating',
+      'ratings_quantity',
+      'price',
+    ],
+  }),
+);
 
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
