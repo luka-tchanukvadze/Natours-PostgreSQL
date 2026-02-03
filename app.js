@@ -1,8 +1,10 @@
+/// <reference path="types.d.ts" />
 const express = require('express');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 
 const AppError = require('./utils/appError');
+
 const globalErrorHandler = require('./controllers/errorController');
 const tourRourter = require('./routes/tourRoutes');
 const userRourter = require('./routes/userRoutes');

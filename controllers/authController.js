@@ -6,6 +6,7 @@ const bcrypt = require('bcryptjs');
 const pool = require('./../db');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
+
 const sendEmail = require('./../utils/email');
 ////////////////////////////////////////
 ////////////////////////////////////////
@@ -34,14 +35,14 @@ const signToken = (id) => {
       id,
     },
     process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN }
+    { expiresIn: process.env.JWT_EXPIRES_IN },
   );
 };
 
 const changedPasswordAfter = (JWTTimestamp, user) => {
   if (user.password_changed_at) {
     const changedTimestamp = Math.floor(
-      new Date(user.password_changed_at).getTime() / 1000
+      new Date(user.password_changed_at).getTime() / 1000,
     );
     const changedAfter = JWTTimestamp < changedTimestamp;
     return changedAfter;
@@ -70,7 +71,7 @@ const createSendToken = (user, statusCode, req, res) => {
   res.cookie('jwt', token, {
     expires: new Date(
       Date.now() +
-        parseInt(process.env.JWT_COOKIE_EXPIRES, 10) * 24 * 60 * 60 * 1000
+        parseInt(process.env.JWT_COOKIE_EXPIRES, 10) * 24 * 60 * 60 * 1000,
     ),
     httpOnly: true,
     secure: req.secure || req.headers['x-forwarded-proto'] === 'https',
@@ -165,7 +166,7 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   if (!token) {
     return next(
-      new AppError('You are not logged in! Please log in to get access.', 401)
+      new AppError('You are not logged in! Please log in to get access.', 401),
     );
   }
 
@@ -188,15 +189,15 @@ exports.protect = catchAsync(async (req, res, next) => {
     return next(
       new AppError(
         'The user belonging to this token does no longer exist.',
-        401
-      )
+        401,
+      ),
     );
   }
 
   // 4) Check if user changed password after the token was issued
   if (changedPasswordAfter(decoded.iat, currentUser)) {
     return next(
-      new AppError('User recently changed password. Please log in again.', 401)
+      new AppError('User recently changed password. Please log in again.', 401),
     );
   }
 
@@ -210,7 +211,7 @@ exports.restrictTo = (...roles) => {
     // roles ['admin', 'lead-guide']. role='user'
     if (!roles.includes(req.user.role)) {
       return next(
-        new AppError('You do not have permission to perform this action', 403)
+        new AppError('You do not have permission to perform this action', 403),
       );
     }
 
@@ -247,11 +248,11 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
       password_reset_expires = $2
   WHERE id = $3
   `,
-    [hashedToken, expires, currentUser.id]
+    [hashedToken, expires, currentUser.id],
   );
   // 3) Send it to user's email
   const resetURL = `${req.protocol}://${req.get(
-    'host'
+    'host',
   )}/api/v1/users/resetPassword/${resetToken}`;
 
   const message = `Forgot your password? Submit a PATCH request with your new passwod and passwordCOnfirm to: ${resetURL}/\n if you didn't forget your password, please ignore this email!`;
@@ -273,7 +274,10 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     currentUser.password_reset_expires = undefined;
 
     return next(
-      new AppError('There was an error sending the email.Try again later!', 500)
+      new AppError(
+        'There was an error sending the email.Try again later!',
+        500,
+      ),
     );
   }
 });
@@ -293,7 +297,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
     WHERE password_reset_token = $1
       AND password_reset_expires > NOW()
     `,
-    [hashedToken]
+    [hashedToken],
   );
 
   const user = result.rows[0];
@@ -315,7 +319,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
         password_changed_at = NOW()
     WHERE id = $2
     `,
-    [hashedPassword, user.id]
+    [hashedPassword, user.id],
   );
 
   // 5) Log user in
@@ -330,7 +334,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
     FROM users
     WHERE id = $1
     `,
-    [req.user.id]
+    [req.user.id],
   );
 
   const user = result.rows[0];
@@ -338,7 +342,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   // 2) Check current password
   const isCorrect = await bcrypt.compare(
     req.body.password_current,
-    user.password
+    user.password,
   );
 
   if (!isCorrect) {
@@ -356,7 +360,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
         password_changed_at = NOW()
     WHERE id = $2
     `,
-    [hashedPassword, user.id]
+    [hashedPassword, user.id],
   );
 
   // 5) Send new JWT
