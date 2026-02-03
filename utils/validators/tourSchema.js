@@ -50,9 +50,7 @@ exports.tourSchema = z
     slug: z.string().optional(),
 
     difficulty: z.enum(['easy', 'medium', 'difficult'], {
-      errorMap: () => ({
-        message: 'Difficulty must be easy, medium, or difficult',
-      }),
+      message: 'Difficulty must be easy, medium, or difficult',
     }),
 
     secret_tour: z.boolean().optional(),
