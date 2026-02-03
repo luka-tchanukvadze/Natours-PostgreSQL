@@ -24,9 +24,9 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Set security HTTP headers
-app.use(helmet());
+app.use(helmet.default());
 
-const limiter = rateLimit({
+const limiter = rateLimit.default({
   limit: 100,
   windowMs: 60 * 60 * 1000,
   message: 'Too many requests from this IP, please try again in an hour!',
