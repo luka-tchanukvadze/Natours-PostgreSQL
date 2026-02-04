@@ -1,7 +1,13 @@
-const pool = require('../db');
+import { Pool } from 'pg';
+const pool: Pool = require('../db');
+
+interface TourStats {
+  ratings_quantity: number;
+  avg_rating: number;
+}
 
 // For learning purposes
-module.exports = async function calcTourRatings(tourId) {
+module.exports = async function calcTourRatings(tourId: number): Promise<void> {
   const statsSql = `
     SELECT
       COUNT(*)::int AS ratings_quantity,
@@ -10,7 +16,7 @@ module.exports = async function calcTourRatings(tourId) {
     WHERE tour_id = $1
   `;
 
-  const stats = await pool.query(statsSql, [tourId]);
+  const stats = await pool.query<TourStats>(statsSql, [tourId]);
 
   const { ratings_quantity, avg_rating } = stats.rows[0];
 

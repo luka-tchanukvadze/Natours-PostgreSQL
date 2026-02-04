@@ -1,6 +1,7 @@
-const sanitizeHtml = require('sanitize-html');
+import { Request, Response, NextFunction } from 'express';
+import * as sanitizeHtml from 'sanitize-html';
 
-const sanitizeObject = (obj) => {
+const sanitizeObject = (obj: any): any => {
   if (obj === null || typeof obj !== 'object') {
     return obj;
   }
@@ -17,9 +18,15 @@ const sanitizeObject = (obj) => {
       }
     }
   }
+
+  return obj;
 };
 
-const sanitizationMiddleware = (req, res, next) => {
+const sanitizationMiddleware = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void => {
   if (req.body) {
     sanitizeObject(req.body);
   }
