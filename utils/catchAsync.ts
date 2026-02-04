@@ -6,7 +6,6 @@ type AsyncFunction = (
   next: NextFunction,
 ) => Promise<any>;
 
-// Keep CommonJS export
 module.exports = (fn: AsyncFunction) => {
   return (req: Request, res: Response, next: NextFunction) => {
     fn(req, res, next).catch(next);
