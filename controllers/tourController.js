@@ -1,11 +1,11 @@
-const pool = require('./../db');
-const APIFeatures = require('./../utils/apiFeatures');
-const catchAsync = require('./../utils/catchAsync');
-const AppError = require('./../utils/appError');
+import pool from './../db.js';
+import APIFeatures from './../utils/apiFeatures.js';
+import catchAsync from './../utils/catchAsync.js';
+import AppError from './../utils/appError.js';
 
-const factory = require('./handlerFactory');
+import * as factory from './handlerFactory.js';
 
-exports.aliasTopTours = (req, res, next) => {
+export const aliasTopTours = (req, res, next) => {
   req.query.limit = '2';
   ((req.query.sort = '-rating, price'),
     (req.query.fields = 'name,price,rating,summary,difficulty'));
@@ -13,14 +13,14 @@ exports.aliasTopTours = (req, res, next) => {
   next();
 };
 
-exports.getAllTours = factory.getAll('tours', {
+export const getAllTours = factory.getAll('tours', {
   virtuals: (tour) => ({
     ...tour,
     duration_in_weeks: tour.duration / 7,
   }),
 });
 
-exports.createTour = factory.createOne(
+export const createTour = factory.createOne(
   'tours',
   [
     'name',
@@ -47,11 +47,11 @@ exports.createTour = factory.createOne(
   ],
   ['locations'], // JSONB fields only
 );
-exports.getTour = factory.getOne('tours', { path: 'reviews' });
-exports.updateTour = factory.updateOne('tours', ['name', 'rating', 'price']);
-exports.deleteTour = factory.deleteOne('tours');
+export const getTour = factory.getOne('tours', { path: 'reviews' });
+export const updateTour = factory.updateOne('tours', ['name', 'rating', 'price']);
+export const deleteTour = factory.deleteOne('tours');
 
-exports.getTourStats = catchAsync(async (req, res, next) => {
+export const getTourStats = catchAsync(async (req, res, next) => {
   const sql = `
       SELECT
         difficulty,
@@ -74,7 +74,7 @@ exports.getTourStats = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getMonthlyPlan = catchAsync(async (req, res, next) => {
+export const getMonthlyPlan = catchAsync(async (req, res, next) => {
   const year = Number(req.params.year);
 
   const sql = `
@@ -104,9 +104,9 @@ exports.getMonthlyPlan = catchAsync(async (req, res, next) => {
 // /tours-within/:distance/center/:latlng/unit/:unit
 // /tours-within/233/center/51.453789,-0.192270/unit/mi
 // /tours-within/:distance/center/:latlng/unit/:unit
-exports.getToursWithin = catchAsync(async (req, res, next) => {
+export const getToursWithin = catchAsync(async (req, res, next) => {
   const { distance, latlng, unit } = req.params;
-  const [lat, lng] = latlng.split(',').map(Number);
+  const [lat, lng] = String(latlng).split(',').map(Number);
 
   if (!lat || !lng) {
     return next(
@@ -147,9 +147,9 @@ exports.getToursWithin = catchAsync(async (req, res, next) => {
 });
 
 // /distances/:latlng/unit/:unit
-exports.getDistances = catchAsync(async (req, res, next) => {
+export const getDistances = catchAsync(async (req, res, next) => {
   const { latlng, unit } = req.params;
-  const [lat, lng] = latlng.split(',').map(Number);
+  const [lat, lng] = String(latlng).split(',').map(Number);
 
   if (!lat || !lng) {
     return next(
@@ -200,7 +200,7 @@ function addVirstuals(tour) {
   };
 }
 
-exports.getAllTours = catchAsync(async (req, res, next) => {
+export const getAllTours = catchAsync(async (req, res, next) => {
   const features = new APIFeatures('tours', req.query)
     .filter()
     .sort()
@@ -229,7 +229,7 @@ exports.getAllTours = catchAsync(async (req, res, next) => {
 
 
 
-exports.createTour = catchAsync(async (req, res, next) => {
+export const createTour = catchAsync(async (req, res, next) => {
   const {
     name,
     duration,
@@ -304,7 +304,7 @@ exports.createTour = catchAsync(async (req, res, next) => {
 
 
 
-exports.updateTour = catchAsync(async (req, res, next) => {
+export const updateTour = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const { name, rating, price } = req.body;
 
@@ -337,7 +337,7 @@ exports.updateTour = catchAsync(async (req, res, next) => {
 
 
 
-exports.deleteTour = catchAsync(async (req, res, next) => {
+export const deleteTour = catchAsync(async (req, res, next) => {
   const { id } = req.params;
 
   const sql = `DELETE FROM tours WHERE id = $1`;

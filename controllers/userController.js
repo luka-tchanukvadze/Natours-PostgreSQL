@@ -1,7 +1,7 @@
-const pool = require('./../db');
-const catchAsync = require('./../utils/catchAsync');
-const AppError = require('./../utils/appError');
-const factory = require('./handlerFactory');
+import pool from './../db.js';
+import catchAsync from './../utils/catchAsync.js';
+import AppError from './../utils/appError.js';
+import * as factory from './handlerFactory.js';
 
 //////////////////////////////////
 //////// filter helper //////////
@@ -21,11 +21,11 @@ const filterObj = (obj, ...allowedFields) => {
 
 // GET ALL USERS (only active users)
 
-// exports.getAllUsers = factory.getAll('users', {
+// export const getAllUsers = factory.getAll('users', {
 //   select: ['id', 'name', 'email', 'photo', 'role', 'active'],
 // });
 
-exports.getAllUsers = catchAsync(async (req, res, next) => {
+export const getAllUsers = catchAsync(async (req, res, next) => {
   const sql = `
     SELECT id, name, email, photo, role, active
     FROM users
@@ -49,12 +49,12 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getMe = (req, res, next) => {
+export const getMe = (req, res, next) => {
   req.params.id = req.user.id;
   next();
 };
 
-exports.updateMe = catchAsync(async (req, res, next) => {
+export const updateMe = catchAsync(async (req, res, next) => {
   // 1) Prevent password updates on this route
   // This route is only for updating name/email, not password.
   if (req.body.password || req.body.password_confirm) {
@@ -119,7 +119,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.deleteMe = catchAsync(async (req, res, next) => {
+export const deleteMe = catchAsync(async (req, res, next) => {
   const sql = `
     UPDATE users
     SET active = FALSE
@@ -135,7 +135,7 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getUser = catchAsync(async (req, res, next) => {
+export const getUser = catchAsync(async (req, res, next) => {
   const sql = `
     SELECT id, name, email, photo, role, active
     FROM users
@@ -156,21 +156,21 @@ exports.getUser = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createUser = (req, res) => {
+export const createUser = (req, res) => {
   res.status(500).json({
     status: 'error',
     message: 'This route is not defined! Please use /signup instead',
   });
 };
 
-exports.updateUser = (req, res) => {
+export const updateUser = (req, res) => {
   res.status(500).json({
     status: 'error',
     message: 'This route is not yet defined',
   });
 };
 
-exports.deleteUser = (req, res) => {
+export const deleteUser = (req, res) => {
   res.status(500).json({
     status: 'error',
     message: 'This route is not yet defined',

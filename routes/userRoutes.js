@@ -1,8 +1,8 @@
-const express = require('express');
-const userController = require('./../controllers/userController');
-const authController = require('./../controllers/authController');
-const { validate } = require('./../utils/validators/validate');
-const { userSchema } = require('./../utils/validators/userSchema');
+import express from 'express';
+import * as userController from './../controllers/userController.js';
+import * as authController from './../controllers/authController.js';
+import { validate } from './../utils/validators/validate.js';
+import { userSchema } from './../utils/validators/userSchema.js';
 
 const router = express.Router();
 
@@ -33,4 +33,4 @@ router
   .patch(userController.updateUser)
   .delete(userController.deleteUser);
 
-module.exports = router;
+export default router;

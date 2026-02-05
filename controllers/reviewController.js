@@ -1,29 +1,29 @@
-const pool = require('./../db');
-const catchAsync = require('./../utils/catchAsync');
-const AppError = require('./../utils/appError');
-const factory = require('./handlerFactory');
+import pool from './../db.js';
+import catchAsync from './../utils/catchAsync.js';
+import AppError from './../utils/appError.js';
+import * as factory from './handlerFactory.js';
 
 /**
  * Allow nested routes
  * /tours/:tourId/reviews
  */
-exports.setTourUserIds = (req, res, next) => {
+export const setTourUserIds = (req, res, next) => {
   if (!req.body.tour_id) req.body.tour_id = req.params.tourId;
   if (!req.body.user_id) req.body.user_id = req.user.id;
   next();
 };
 
-exports.createReview = factory.createOne('reviews', [
+export const createReview = factory.createOne('reviews', [
   'review',
   'rating',
   'tour_id',
   'user_id',
 ]);
-exports.updateReview = factory.updateOne('reviews', ['review', 'rating']);
-exports.getReview = factory.getOne('reviews');
-exports.deleteReview = factory.deleteOne('reviews');
+export const updateReview = factory.updateOne('reviews', ['review', 'rating']);
+export const getReview = factory.getOne('reviews');
+export const deleteReview = factory.deleteOne('reviews');
 
-exports.getAllReviews = catchAsync(async (req, res, next) => {
+export const getAllReviews = catchAsync(async (req, res, next) => {
   let sql = `
     SELECT
       r.*,
@@ -50,7 +50,7 @@ exports.getAllReviews = catchAsync(async (req, res, next) => {
   });
 });
 
-// exports.getReview = catchAsync(async (req, res, next) => {
+// export const getReview = catchAsync(async (req, res, next) => {
 //   const sql = `
 //     SELECT
 //       r.*,

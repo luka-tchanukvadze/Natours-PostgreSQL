@@ -1,6 +1,6 @@
-const { z } = require('zod');
+import { z } from 'zod';
 
-exports.tourSchema = z
+export const tourSchema = z
   .object({
     name: z
       .string({ message: 'Name must be a string' })

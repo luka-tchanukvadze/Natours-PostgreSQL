@@ -1,11 +1,11 @@
-const catchAsync = require('./../utils/catchAsync');
-const AppError = require('./../utils/appError');
-const pool = require('./../db');
-const APIFeatures = require('./../utils/apiFeatures');
+import catchAsync from './../utils/catchAsync.js';
+import AppError from './../utils/appError.js';
+import pool from './../db.js';
+import APIFeatures from './../utils/apiFeatures.js';
 
 const ALLOWED_TABLES = ['tours', 'reviews', 'users'];
 
-exports.deleteOne = (table) =>
+export const deleteOne = (table) =>
   catchAsync(async (req, res, next) => {
     if (!ALLOWED_TABLES.includes(table)) {
       return next(new AppError('Invalid table name', 400));
@@ -26,7 +26,7 @@ exports.deleteOne = (table) =>
     });
   });
 
-exports.updateOne = (table, allowedFields = []) =>
+export const updateOne = (table, allowedFields = []) =>
   catchAsync(async (req, res, next) => {
     if (!ALLOWED_TABLES.includes(table)) {
       return next(new AppError('Invalid table name', 400));
@@ -78,7 +78,7 @@ exports.updateOne = (table, allowedFields = []) =>
     });
   });
 
-exports.createOne = (table, allowedFields = [], jsonbFields = []) =>
+export const createOne = (table, allowedFields = [], jsonbFields = []) =>
   catchAsync(async (req, res, next) => {
     const data = {};
 
@@ -121,7 +121,7 @@ exports.createOne = (table, allowedFields = [], jsonbFields = []) =>
     });
   });
 
-exports.getOne = (table, options = {}) =>
+export const getOne = (table, options = {}) =>
   catchAsync(async (req, res, next) => {
     if (!ALLOWED_TABLES.includes(table)) {
       return next(new AppError('Invalid table name', 400));
@@ -164,7 +164,7 @@ exports.getOne = (table, options = {}) =>
     });
   });
 
-exports.getAll = (table, options = {}) =>
+export const getAll = (table, options = {}) =>
   catchAsync(async (req, res, next) => {
     if (!ALLOWED_TABLES.includes(table)) {
       return next(new AppError('Invalid table name', 400));
@@ -180,7 +180,7 @@ exports.getAll = (table, options = {}) =>
 
     const result = await pool.query(features.sql, features.values);
 
-    if (result.rows.length === 0 && req.query.page > 1) {
+    if (result.rows.length === 0 && Number(req.query.page) > 1) {
       return next(new AppError('This page does not exist', 404));
     }
 
