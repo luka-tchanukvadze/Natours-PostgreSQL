@@ -28,4 +28,4 @@ const sendEmail = async (options: EmailOptions): Promise<void> => {
   await transporter.sendMail(mailOptions);
 };
 
-module.exports = sendEmail;
+export default sendEmail;

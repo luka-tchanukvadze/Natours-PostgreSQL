@@ -1,16 +1,19 @@
 /// <reference path="types.d.ts" />
-const express = require('express');
-const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
+import express from 'express';
+import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
 
-const AppError = require('./utils/appError');
+import AppError from './utils/appError.js';
 
-const globalErrorHandler = require('./controllers/errorController');
-const tourRourter = require('./routes/tourRoutes');
-const userRourter = require('./routes/userRoutes');
-const reviewRourter = require('./routes/reviewRoutes');
-const helmet = require('helmet');
-const cors = require('cors');
+import globalErrorHandler from './controllers/errorController.js';
+import tourRourter from './routes/tourRoutes.js';
+import userRourter from './routes/userRoutes.js';
+import reviewRourter from './routes/reviewRoutes.js';
+import helmet from 'helmet';
+import cors from 'cors';
+
+import hpp from 'hpp';
+import sanitizationMiddleware from './utils/sanitize.js';
 
 const app = express();
 
@@ -26,21 +29,19 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Set security HTTP headers
-app.use(helmet.default());
+app.use(helmet());
 
-const limiter = rateLimit.default({
+const limiter = rateLimit({
   limit: 100,
   windowMs: 60 * 60 * 1000,
   message: 'Too many requests from this IP, please try again in an hour!',
 });
 app.use('/api', limiter);
 
-const hpp = require('hpp');
-const sanitizationMiddleware = require('./utils/sanitize');
-
 app.use(express.json({ limit: '10kb' })); // Limit body size
 
 // Data sanitization against XSS
+// @ts-ignore
 app.use(sanitizationMiddleware);
 
 // Prevent http parameter pollution
@@ -73,4 +74,4 @@ app.all('*', (req, res, next) => {
 
 app.use(globalErrorHandler);
 
-module.exports = app;
+export default app;

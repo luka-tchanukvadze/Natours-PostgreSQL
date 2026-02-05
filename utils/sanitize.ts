@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import * as sanitizeHtml from 'sanitize-html';
+import sanitizeHtml from 'sanitize-html';
 
 const sanitizeObject = (obj: any): any => {
   if (obj === null || typeof obj !== 'object') {
@@ -33,4 +33,4 @@ const sanitizationMiddleware = (
   next();
 };
 
-module.exports = sanitizationMiddleware;
+export default sanitizationMiddleware;

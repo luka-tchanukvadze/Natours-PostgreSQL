@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-const pool: Pool = require('../db');
+import pool from '../db.js';
 
 interface TourStats {
   ratings_quantity: number;
@@ -7,7 +7,7 @@ interface TourStats {
 }
 
 // For learning purposes
-module.exports = async function calcTourRatings(tourId: number): Promise<void> {
+export default async function calcTourRatings(tourId: number): Promise<void> {
   const statsSql = `
     SELECT
       COUNT(*)::int AS ratings_quantity,
@@ -29,4 +29,4 @@ module.exports = async function calcTourRatings(tourId: number): Promise<void> {
   `;
 
   await pool.query(updateTourSql, [ratings_quantity, avg_rating, tourId]);
-};
+}

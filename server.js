@@ -1,4 +1,4 @@
-const dotenv = require('dotenv');
+import dotenv from 'dotenv';
 
 process.on('uncaughtException', (err) => {
   console.log('UNCAUGHT EXCEPTION! Shutting down...');
@@ -10,10 +10,10 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
-dotenv.config({ path: './config.env' });
+dotenv.config({ path: './config.env', override: true });
 
-const app = require('./app');
-const pool = require('./db');
+import app from './app.js';
+import pool from './db.js';
 
 // test db connection
 pool.query('SELECT 1').then(() => console.log('DB connected'));

@@ -1,6 +1,10 @@
-const { Pool } = require('pg');
+import pg from 'pg';
+import dotenv from 'dotenv';
 
-const pool = new Pool({
+// Ensure dotenv is configured if not already
+dotenv.config({ path: './config.env', override: true });
+
+const pool = new pg.Pool({
   user: 'postgres',
   host: '127.0.0.1',
   database: 'natourspsql',
@@ -8,4 +12,4 @@ const pool = new Pool({
   port: 5432,
 });
 
-module.exports = pool;
+export default pool;
