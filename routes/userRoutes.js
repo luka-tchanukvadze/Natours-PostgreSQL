@@ -2,7 +2,7 @@ import express from 'express';
 import * as userController from './../controllers/userController.js';
 import * as authController from './../controllers/authController.js';
 import { validate } from './../utils/validators/validate.js';
-import { userSchema } from './../utils/validators/userSchema.js';
+import { userSchema } from '../utils/validators/userSchema.js';
 
 const router = express.Router();
 

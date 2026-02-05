@@ -1,10 +1,13 @@
-import pg from 'pg';
+import { Pool } from 'pg';
 import dotenv from 'dotenv';
 
-// Ensure dotenv is configured if not already
 dotenv.config({ path: './config.env', override: true });
 
-const pool = new pg.Pool({
+if (!process.env.DB_PASSWORD) {
+  throw new Error('DB_PASSWORD is not defined');
+}
+
+const pool = new Pool({
   user: 'postgres',
   host: '127.0.0.1',
   database: 'natourspsql',
