@@ -2,11 +2,14 @@
   "name": "natourspostgresql",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/server.js",
+  "type": "module",
   "scripts": {
-    "start": "nodemon server.js",
-    "dev": "ts-node-dev --respawn server.js",
+    "start": "node dist/server.js",
     "build": "tsc",
+    "dev:compile": "tsc --watch",
+    "dev:run": "nodemon --watch dist dist/server.js",
+    "dev": "npm run build && concurrently \"npm run dev:compile\" \"npm run dev:run\"",
     "lint": "eslint '**/*.{ts,js}'"
   },
   "author": "",
@@ -41,6 +44,8 @@
     "@typescript-eslint/parser": "^8.54.0",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.0"
   }
 }
