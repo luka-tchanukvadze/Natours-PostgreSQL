@@ -1,7 +1,28 @@
 import AppError from './appError.js';
 
+interface QueryString {
+  page?: string;
+  sort?: string;
+  limit?: string;
+  fields?: string;
+  [key: string]: any; // Allow for other properties
+}
+
+interface ColumnWhitelist {
+  tours: string[];
+  users: string[];
+  reviews: string[];
+  [key: string]: string[]; // Allow for other tables
+}
+
 class APIFeatures {
-  constructor(table, queryString, select = '*') {
+  table: string;
+  queryString: QueryString;
+  sql: string;
+  values: (string | number)[];
+  columnWhitelist: ColumnWhitelist;
+
+  constructor(table: string, queryString: QueryString, select: string = '*') {
     this.table = table;
     this.queryString = queryString;
     this.sql = `SELECT ${select} FROM ${this.table}`;
@@ -24,20 +45,20 @@ class APIFeatures {
     };
   }
 
-  filter() {
+  filter(): APIFeatures {
     const queryObj = { ...this.queryString };
     const excludedFields = ['page', 'sort', 'limit', 'fields'];
     excludedFields.forEach((el) => delete queryObj[el]);
 
-    const conditions = [];
-    const allowedFields = this.columnWhitelist[this.table] || [];
+    const conditions: string[] = [];
+    const allowedFields: string[] = this.columnWhitelist[this.table] || [];
 
     for (const field in queryObj) {
       if (!allowedFields.includes(field)) continue; // Skip non-whitelisted fields
 
-      if (typeof queryObj[field] === 'object') {
+      if (typeof queryObj[field] === 'object' && queryObj[field] !== null) {
         for (const operator in queryObj[field]) {
-          const sqlOperatorMap = {
+          const sqlOperatorMap: { [key: string]: string } = {
             gte: '>=',
             gt: '>',
             lte: '<=',
@@ -66,11 +87,11 @@ class APIFeatures {
     return this;
   }
 
-  sort() {
-    const allowed = this.columnWhitelist[this.table] || [];
+  sort(): APIFeatures {
+    const allowed: string[] = this.columnWhitelist[this.table] || [];
     if (this.queryString.sort) {
-      const sortByFields = this.queryString.sort.split(',');
-      const sortClauses = sortByFields.map((field) => {
+      const sortByFields: string[] = this.queryString.sort.split(',');
+      const sortClauses: string[] = sortByFields.map((field) => {
         const direction = field.startsWith('-') ? 'DESC' : 'ASC';
         const cleanField = field.replace(/^-/, '');
 
@@ -88,11 +109,11 @@ class APIFeatures {
     return this;
   }
 
-  fields() {
-    const allowed = this.columnWhitelist[this.table] || [];
+  fields(): APIFeatures {
+    const allowed: string[] = this.columnWhitelist[this.table] || [];
     if (this.queryString.fields) {
-      const fieldsToSelect = this.queryString.fields.split(',');
-      const selectedFields = fieldsToSelect.filter((field) =>
+      const fieldsToSelect: string[] = this.queryString.fields.split(',');
+      const selectedFields: string[] = fieldsToSelect.filter((field) =>
         allowed.includes(field),
       );
 
@@ -108,7 +129,7 @@ class APIFeatures {
     return this;
   }
 
-  paginate() {
+  paginate(): APIFeatures {
     const page = Math.max(1, Number(this.queryString.page) || 1);
     const limit = Math.max(1, Number(this.queryString.limit) || 100);
     const offset = (page - 1) * limit;
