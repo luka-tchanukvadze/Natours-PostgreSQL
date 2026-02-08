@@ -1,5 +1,4 @@
-/// <reference path="types.d.ts" />
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 
@@ -41,7 +40,6 @@ app.use('/api', limiter);
 app.use(express.json({ limit: '10kb' })); // Limit body size
 
 // Data sanitization against XSS
-// @ts-ignore
 app.use(sanitizationMiddleware);
 
 // Prevent http parameter pollution
@@ -58,7 +56,7 @@ app.use(
   }),
 );
 
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
   req.requestTime = new Date().toISOString();
   next();
 });
@@ -68,7 +66,7 @@ app.use('/api/v1/tours', tourRourter);
 app.use('/api/v1/users', userRourter);
 app.use('/api/v1/reviews', reviewRourter);
 
-app.all('*', (req, res, next) => {
+app.all('*', (req: Request, res: Response, next: NextFunction) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 

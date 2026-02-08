@@ -1,20 +1,26 @@
+import { Request, Response, NextFunction } from 'express';
 import pool from './../db.js';
 import APIFeatures from './../utils/apiFeatures.js';
 import catchAsync from './../utils/catchAsync.js';
 import AppError from './../utils/appError.js';
 
 import * as factory from './handlerFactory.js';
+import { Tour } from './../types';
 
-export const aliasTopTours = (req, res, next) => {
+export const aliasTopTours = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void => {
   req.query.limit = '2';
-  ((req.query.sort = '-rating, price'),
-    (req.query.fields = 'name,price,rating,summary,difficulty'));
+  req.query.sort = '-rating, price';
+  req.query.fields = 'name,price,rating,summary,difficulty';
 
   next();
 };
 
 export const getAllTours = factory.getAll('tours', {
-  virtuals: (tour) => ({
+  virtuals: (tour: Tour) => ({
     ...tour,
     duration_in_weeks: tour.duration / 7,
   }),
@@ -48,11 +54,16 @@ export const createTour = factory.createOne(
   ['locations'], // JSONB fields only
 );
 export const getTour = factory.getOne('tours', { path: 'reviews' });
-export const updateTour = factory.updateOne('tours', ['name', 'rating', 'price']);
+export const updateTour = factory.updateOne('tours', [
+  'name',
+  'rating',
+  'price',
+]);
 export const deleteTour = factory.deleteOne('tours');
 
-export const getTourStats = catchAsync(async (req, res, next) => {
-  const sql = `
+export const getTourStats = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const sql = `
       SELECT
         difficulty,
         COUNT(*) AS total_tours,
@@ -65,20 +76,22 @@ export const getTourStats = catchAsync(async (req, res, next) => {
       GROUP BY difficulty
       ORDER BY difficulty;
     `;
-  const result = await pool.query(sql);
-  const stats = result.rows;
+    const result = await pool.query(sql);
+    const stats: any[] = result.rows; // TODO: Define a specific interface for TourStats
 
-  res.status(200).json({
-    status: 'success',
-    data: stats,
-  });
-});
+    res.status(200).json({
+      status: 'success',
+      data: stats,
+    });
+  },
+);
 
-export const getMonthlyPlan = catchAsync(async (req, res, next) => {
-  const year = Number(req.params.year);
+export const getMonthlyPlan = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const year = Number(req.params.year);
 
-  const sql = `
-      SELECT 
+    const sql = `
+      SELECT
         EXTRACT(MONTH FROM sd) AS month,
         COUNT(*) AS num_tour_starts,
         ARRAY_AGG(t.name) AS tours
@@ -90,37 +103,39 @@ export const getMonthlyPlan = catchAsync(async (req, res, next) => {
       LIMIT 12;
     `;
 
-  const values = [`${year}-01-01`, `${year}-12-31`];
+    const values = [`${year}-01-01`, `${year}-12-31`];
 
-  const result = await pool.query(sql, values);
+    const result = await pool.query(sql, values);
 
-  res.status(200).json({
-    status: 'success',
-    results: result.rows.length,
-    data: result.rows,
-  });
-});
+    res.status(200).json({
+      status: 'success',
+      results: result.rows.length,
+      data: result.rows,
+    });
+  },
+);
 
 // /tours-within/:distance/center/:latlng/unit/:unit
 // /tours-within/233/center/51.453789,-0.192270/unit/mi
 // /tours-within/:distance/center/:latlng/unit/:unit
-export const getToursWithin = catchAsync(async (req, res, next) => {
-  const { distance, latlng, unit } = req.params;
-  const [lat, lng] = String(latlng).split(',').map(Number);
+export const getToursWithin = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { distance, latlng, unit } = req.params;
+    const [lat, lng] = String(latlng).split(',').map(Number);
 
-  if (!lat || !lng) {
-    return next(
-      new AppError(
-        'Please provide latitude and longitude in the format lat,lng.',
-        400,
-      ),
-    );
-  }
+    if (!lat || !lng) {
+      return next(
+        new AppError(
+          'Please provide latitude and longitude in the format lat,lng.',
+          400,
+        ),
+      );
+    }
 
-  // Earth radius in miles or kilometers
-  const earthRadius = unit === 'mi' ? 3958.8 : 6371;
+    // Earth radius in miles or kilometers
+    const earthRadius = unit === 'mi' ? 3958.8 : 6371;
 
-  const sql = `
+    const sql = `
     SELECT *
     FROM tours
     WHERE (
@@ -134,36 +149,38 @@ export const getToursWithin = catchAsync(async (req, res, next) => {
     ) <= $3
   `;
 
-  const values = [lat, lng, distance, earthRadius];
-  const result = await pool.query(sql, values);
+    const values = [lat, lng, distance, earthRadius];
+    const result = await pool.query(sql, values);
 
-  res.status(200).json({
-    status: 'success',
-    results: result.rows.length,
-    data: {
-      tours: result.rows,
-    },
-  });
-});
+    res.status(200).json({
+      status: 'success',
+      results: result.rows.length,
+      data: {
+        tours: result.rows as Tour[],
+      },
+    });
+  },
+);
 
 // /distances/:latlng/unit/:unit
-export const getDistances = catchAsync(async (req, res, next) => {
-  const { latlng, unit } = req.params;
-  const [lat, lng] = String(latlng).split(',').map(Number);
+export const getDistances = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { latlng, unit } = req.params;
+    const [lat, lng] = String(latlng).split(',').map(Number);
 
-  if (!lat || !lng) {
-    return next(
-      new AppError(
-        'Please provide latitude and longitude in the format lat,lng.',
-        400,
-      ),
-    );
-  }
+    if (!lat || !lng) {
+      return next(
+        new AppError(
+          'Please provide latitude and longitude in the format lat,lng.',
+          400,
+        ),
+      );
+    }
 
-  // Earth radius in miles or kilometers
-  const earthRadius = unit === 'mi' ? 3958.8 : 6371;
+    // Earth radius in miles or kilometers
+    const earthRadius = unit === 'mi' ? 3958.8 : 6371;
 
-  const sql = `
+    const sql = `
     SELECT
       name,
       (
@@ -179,19 +196,20 @@ export const getDistances = catchAsync(async (req, res, next) => {
     ORDER BY distance ASC
   `;
 
-  const values = [lat, lng, earthRadius];
-  const result = await pool.query(sql, values);
+    const values = [lat, lng, earthRadius];
+    const result = await pool.query(sql, values);
 
-  res.status(200).json({
-    status: 'success',
-    data: {
-      data: result.rows,
-    },
-  });
-});
+    res.status(200).json({
+      status: 'success',
+      data: {
+        data: result.rows,
+      },
+    });
+  },
+);
 
 /*
-Before Factory Function
+Before Factory Function JS version
 
 function addVirstuals(tour) {
   return {

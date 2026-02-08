@@ -1,12 +1,17 @@
+import { Request, Response, NextFunction } from 'express';
 import catchAsync from './../utils/catchAsync.js';
 import AppError from './../utils/appError.js';
 import pool from './../db.js';
 import APIFeatures from './../utils/apiFeatures.js';
+import { User, Tour, Review } from './../types';
 
-const ALLOWED_TABLES = ['tours', 'reviews', 'users'];
+type AllowedTables = 'tours' | 'reviews' | 'users';
+type Model = User | Tour | Review;
 
-export const deleteOne = (table) =>
-  catchAsync(async (req, res, next) => {
+const ALLOWED_TABLES: AllowedTables[] = ['tours', 'reviews', 'users'];
+
+export const deleteOne = (table: AllowedTables) =>
+  catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     if (!ALLOWED_TABLES.includes(table)) {
       return next(new AppError('Invalid table name', 400));
     }
@@ -26,14 +31,14 @@ export const deleteOne = (table) =>
     });
   });
 
-export const updateOne = (table, allowedFields = []) =>
-  catchAsync(async (req, res, next) => {
+export const updateOne = (table: AllowedTables, allowedFields: string[] = []) =>
+  catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     if (!ALLOWED_TABLES.includes(table)) {
       return next(new AppError('Invalid table name', 400));
     }
 
     // 1) Filter body (security)
-    const body = {};
+    const body: { [key: string]: any } = {};
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
         body[field] = req.body[field];
@@ -61,7 +66,7 @@ export const updateOne = (table, allowedFields = []) =>
     `;
 
     const result = await pool.query(sql, values);
-    const doc = result.rows[0];
+    const doc: Model = result.rows[0];
 
     if (!doc) {
       return next(
@@ -78,9 +83,13 @@ export const updateOne = (table, allowedFields = []) =>
     });
   });
 
-export const createOne = (table, allowedFields = [], jsonbFields = []) =>
-  catchAsync(async (req, res, next) => {
-    const data = {};
+export const createOne = (
+  table: AllowedTables,
+  allowedFields: string[] = [],
+  jsonbFields: string[] = [],
+) =>
+  catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const data: { [key: string]: any } = {};
 
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
@@ -121,14 +130,14 @@ export const createOne = (table, allowedFields = [], jsonbFields = []) =>
     });
   });
 
-export const getOne = (table, options = {}) =>
-  catchAsync(async (req, res, next) => {
+export const getOne = (table: AllowedTables, options: { path?: string } = {}) =>
+  catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     if (!ALLOWED_TABLES.includes(table)) {
       return next(new AppError('Invalid table name', 400));
     }
 
     const { id } = req.params;
-    let doc;
+    let doc: Model;
     let sql = `SELECT * FROM ${table} WHERE id = $1`;
 
     // 1) Get main document
@@ -152,7 +161,7 @@ export const getOne = (table, options = {}) =>
       `;
 
       const reviewsResult = await pool.query(reviewsSql, [id]);
-      doc.reviews = reviewsResult.rows;
+      (doc as Tour).reviews = reviewsResult.rows;
     }
 
     // 3) Send response
@@ -164,8 +173,11 @@ export const getOne = (table, options = {}) =>
     });
   });
 
-export const getAll = (table, options = {}) =>
-  catchAsync(async (req, res, next) => {
+export const getAll = (
+  table: AllowedTables,
+  options: { select?: string[]; virtuals?: (doc: any) => any } = {},
+) =>
+  catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     if (!ALLOWED_TABLES.includes(table)) {
       return next(new AppError('Invalid table name', 400));
     }
