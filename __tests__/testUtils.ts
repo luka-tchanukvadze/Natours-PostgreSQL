@@ -1,7 +1,6 @@
 import request from 'supertest';
 import app from '../app.js';
 import { PoolClient } from 'pg';
-import pool from '../db.js';
 
 interface AuthResponse {
   token: string;
@@ -33,21 +32,3 @@ export const signupAndLoginUser = async (user: any): Promise<AuthResponse> => {
     user: loginRes.body.data.user,
   };
 };
-
-const tablesToTruncate = ['tours', 'users', 'reviews', 'bookings'];
-
-export const clearDb = async () => {
-  const client = await pool.connect();
-  try {
-    for (const table of tablesToTruncate) {
-      await client.query(`TRUNCATE TABLE ${table} RESTART IDENTITY CASCADE`);
-    }
-  } finally {
-    client.release();
-  }
-};
-
-// clear the database before each test
-beforeEach(async () => {
-  await clearDb();
-});

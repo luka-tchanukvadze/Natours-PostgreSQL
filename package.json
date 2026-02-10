@@ -11,7 +11,9 @@
     "dev:run": "nodemon --watch dist dist/server.js",
     "dev": "npm run build && concurrently \"npm run dev:compile\" \"npm run dev:run\"",
     "lint": "eslint '**/*.{ts,js}'",
-    "test": "cross-env NODE_ENV=test jest"
+    "test": "cross-env NODE_ENV=test jest --runInBand",
+    "test:coverage": "cross-env NODE_ENV=test jest --coverage --runInBand",
+    "test:watch": "cross-env NODE_ENV=test jest --watchAll"
   },
   "author": "",
   "license": "ISC",

@@ -1,10 +1,7 @@
 import request from 'supertest';
 import app from '../../app.js';
-import pool from '../../db.js';
-import { PoolClient } from 'pg';
 import { signupAndLoginUser } from '../testUtils.js';
 
-let client: PoolClient;
 let authToken: string; // To store auth token for authenticated tests
 
 const testUser = {
@@ -22,23 +19,7 @@ const anotherTestUser = {
 };
 
 describe('User Authentication API functionality', () => {
-  beforeAll(async () => {
-    // Arrange
-    // Acquire a client from the pool for potential direct database operations in tests
-    client = await pool.connect();
-  });
-
-  // beforeEach is handled by testUtils.ts clearDb now. Removed here
-
-  afterAll(async () => {
-    // Assert
-    // Close the client and release it back to the pool
-    if (client) {
-      client.release();
-    }
-    // End the pool to close all connections
-    await pool.end();
-  });
+  // beforeAll and afterAll are handled by global setup/teardown
 
   describe('POST /api/v1/users/signup endpoint', () => {
     it('should allow a new user to sign up successfully', async () => {
@@ -71,6 +52,7 @@ describe('User Authentication API functionality', () => {
       expect(res.statusCode).toEqual(400);
       expect(res.body.status).toEqual('fail');
       expect(res.body.message).toContain('duplicate key');
+      expect(res.body.message).toContain('email'); // Assert for the field name
     });
 
     it('should return 400 Bad Request when attempting signup with invalid data, such as a missing password', async () => {
@@ -85,7 +67,7 @@ describe('User Authentication API functionality', () => {
       // Assert
       expect(res.statusCode).toEqual(400);
       expect(res.body.status).toEqual('fail');
-      expect(res.body.message).toContain('Invalid input data');
+      expect(res.body.message).toContain('password'); // More specific assertion for password
     });
   });
 
@@ -187,7 +169,7 @@ describe('User Authentication API functionality', () => {
       // Assert
       expect(res.statusCode).toEqual(400);
       expect(res.body.status).toEqual('fail');
-      expect(res.body.message).toContain('Invalid input data');
+      expect(res.body.message).toContain('email'); // More specific assertion for email
     });
 
     it('should allow an authenticated user to access their own data on a protected route', async () => {
