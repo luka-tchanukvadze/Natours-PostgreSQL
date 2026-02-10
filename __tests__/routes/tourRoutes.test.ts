@@ -2,7 +2,7 @@ import request from 'supertest';
 import app from '../../app.js';
 import pool from '../../db.js';
 import { PoolClient } from 'pg';
-import { signupAndLoginUser, cleanTours, cleanUsers } from '../testUtils.js';
+import { signupAndLoginUser } from '../testUtils.js';
 
 let client: PoolClient;
 let authToken: string;
@@ -31,8 +31,9 @@ const newTour = {
   start_dates: ['2024-07-01', '2024-08-01'],
 };
 
-describe('Tour API', () => {
+describe('Tour API functionality', () => {
   beforeAll(async () => {
+    // Arrange
     client = await pool.connect();
     // Ensure the test user exists and get an auth token
     const auth = await signupAndLoginUser(testUser);
@@ -40,37 +41,42 @@ describe('Tour API', () => {
     userId = auth.user.id;
   });
 
-  beforeEach(async () => {
-    // Clean tours table before each test
-    await cleanTours(client);
-  });
-
   afterAll(async () => {
-    // Clean up users created for testing after all tests are done
-    await cleanUsers(client);
+    // Assert
+    // No need to clean users/tours here, clearDb handles it
     if (client) {
       client.release();
     }
     await pool.end();
   });
 
-  describe('POST /api/v1/tours', () => {
+  describe('POST /api/v1/tours endpoint', () => {
     it('should allow a logged-in admin/lead-guide to create a new tour', async () => {
+      // Arrange
+      const tourToCreate = { ...newTour };
+
+      // Act
       const res = await request(app)
         .post('/api/v1/tours')
         .set('Authorization', `Bearer ${authToken}`)
-        .send(newTour);
+        .send(tourToCreate);
 
+      // Assert
       expect(res.statusCode).toEqual(201);
       expect(res.body.status).toEqual('success');
       expect(res.body.data.tour).toBeDefined();
-      expect(res.body.data.tour.name).toEqual(newTour.name);
-      // Add more assertions for other tour properties
+      expect(res.body.data.tour.name).toEqual(tourToCreate.name);
+      // I should add more assertions for other tour properties
     });
 
-    it('should not allow creating a tour without authentication', async () => {
-      const res = await request(app).post('/api/v1/tours').send(newTour);
+    it('should return 401 Unauthorized when attempting to create a tour without authentication', async () => {
+      // Arrange
+      const tourToCreate = { ...newTour };
 
+      // Act
+      const res = await request(app).post('/api/v1/tours').send(tourToCreate);
+
+      // Assert
       expect(res.statusCode).toEqual(401);
       expect(res.body.status).toEqual('fail');
       expect(res.body.message).toEqual(
@@ -78,23 +84,28 @@ describe('Tour API', () => {
       );
     });
 
-    it('should not allow creating a tour with invalid data', async () => {
+    it('should return 400 Bad Request when attempting to create a tour with invalid data', async () => {
+      // Arrange
       const invalidTour = { ...newTour, name: '' }; // Missing name
+
+      // Act
       const res = await request(app)
         .post('/api/v1/tours')
         .set('Authorization', `Bearer ${authToken}`)
         .send(invalidTour);
 
+      // Assert
       expect(res.statusCode).toEqual(400);
       expect(res.body.status).toEqual('fail');
       expect(res.body.message).toContain('Invalid input data');
     });
   });
 
-  describe('PATCH /api/v1/tours/:id', () => {
+  describe('PATCH /api/v1/tours/:id endpoint', () => {
     let createdTourId: string;
 
     beforeEach(async () => {
+      // Arrange
       // Create a tour to update
       const createRes = await request(app)
         .post('/api/v1/tours')
@@ -103,13 +114,17 @@ describe('Tour API', () => {
       createdTourId = createRes.body.data.tour.id;
     });
 
-    it('should allow a logged-in admin/lead-guide to update a tour', async () => {
+    it('should allow a logged-in admin/lead-guide to update an existing tour', async () => {
+      // Arrange
       const updatedData = { price: 600, difficulty: 'medium' };
+
+      // Act
       const res = await request(app)
         .patch(`/api/v1/tours/${createdTourId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send(updatedData);
 
+      // Assert
       expect(res.statusCode).toEqual(200);
       expect(res.body.status).toEqual('success');
       expect(res.body.data.tour).toBeDefined();
@@ -117,12 +132,16 @@ describe('Tour API', () => {
       expect(res.body.data.tour.difficulty).toEqual(updatedData.difficulty);
     });
 
-    it('should not allow updating a tour without authentication', async () => {
+    it('should return 401 Unauthorized when attempting to update a tour without authentication', async () => {
+      // Arrange
       const updatedData = { price: 700 };
+
+      // Act
       const res = await request(app)
         .patch(`/api/v1/tours/${createdTourId}`)
         .send(updatedData);
 
+      // Assert
       expect(res.statusCode).toEqual(401);
       expect(res.body.status).toEqual('fail');
       expect(res.body.message).toEqual(
@@ -130,14 +149,18 @@ describe('Tour API', () => {
       );
     });
 
-    it('should return an error for updating a non-existent tour', async () => {
+    it('should return 404 Not Found when attempting to update a non-existent tour', async () => {
+      // Arrange
       const nonExistentId = '123e4567-e89b-12d3-a456-426614174000'; // Example UUID
       const updatedData = { price: 800 };
+
+      // Act
       const res = await request(app)
         .patch(`/api/v1/tours/${nonExistentId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send(updatedData);
 
+      // Assert
       expect(res.statusCode).toEqual(404);
       expect(res.body.status).toEqual('fail');
       expect(res.body.message).toContain('No tour found with that ID');
