@@ -1,7 +1,11 @@
 import { Pool, PoolConfig } from 'pg';
 import dotenv from 'dotenv';
 
-dotenv.config({ path: './config.env', override: true });
+if (process.env.NODE_ENV === 'test') {
+  dotenv.config({ path: './config.test.env' });
+} else {
+  dotenv.config({ path: './config.env' });
+}
 
 // Determine which database configuration to use
 let dbConfig: PoolConfig;

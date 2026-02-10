@@ -1,10 +1,7 @@
 import request from 'supertest';
 import app from '../../app.js';
-import pool from '../../db.js';
-import { PoolClient } from 'pg';
 import { signupAndLoginUser } from '../testUtils.js';
 
-let client: PoolClient;
 let authToken: string;
 let userId: string;
 
@@ -34,21 +31,13 @@ const newTour = {
 describe('Tour API functionality', () => {
   beforeAll(async () => {
     // Arrange
-    client = await pool.connect();
     // Ensure the test user exists and get an auth token
     const auth = await signupAndLoginUser(testUser);
     authToken = auth.token;
     userId = auth.user.id;
   });
 
-  afterAll(async () => {
-    // Assert
-    // No need to clean users/tours here, clearDb handles it
-    if (client) {
-      client.release();
-    }
-    await pool.end();
-  });
+  // afterAll is handled by globalTeardown now
 
   describe('POST /api/v1/tours endpoint', () => {
     it('should allow a logged-in admin/lead-guide to create a new tour', async () => {
@@ -84,7 +73,7 @@ describe('Tour API functionality', () => {
       );
     });
 
-    it('should return 400 Bad Request when attempting to create a tour with invalid data', async () => {
+    it('should return 400 Bad Request when attempting to create a tour with invalid data, such as a missing name', async () => {
       // Arrange
       const invalidTour = { ...newTour, name: '' }; // Missing name
 
@@ -97,7 +86,7 @@ describe('Tour API functionality', () => {
       // Assert
       expect(res.statusCode).toEqual(400);
       expect(res.body.status).toEqual('fail');
-      expect(res.body.message).toContain('Invalid input data');
+      expect(res.body.message).toContain('Missing tour name'); // More specific assertion
     });
   });
 
