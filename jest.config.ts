@@ -1,18 +1,23 @@
 import type { Config } from 'jest';
 
 const config: Config = {
-  preset: 'ts-jest',
+  preset: 'ts-jest/presets/default-esm', // Use the ESM-specific preset
   testEnvironment: 'node',
-  globalSetup: './__tests__/setup.ts', // This will run once before all test suites
-  globalTeardown: './__tests__/teardown.ts', // This will run once after all test suites are done
   collectCoverage: true,
   coverageDirectory: 'coverage',
-  coveragePathIgnorePatterns: [
-    '/node_modules/',
-    '/__tests__/',
-  ],
+  coveragePathIgnorePatterns: ['/node_modules/', '/__tests__/'],
+  // This is the CRITICAL part:
+  moduleNameMapper: {
+    // Tells Jest: "If you see an import ending in .js, look for the .ts file instead"
+    '^(\\.\\.?\\/.+)\\.js$': '$1',
+  },
   transform: {
-    '^.+\\.ts?$': 'ts-jest',
+    '^.+\\.ts$': [
+      'ts-jest',
+      {
+        useESM: true, // Tells ts-jest to support ES modules
+      },
+    ],
   },
   transformIgnorePatterns: ['<rootDir>/node_modules/'],
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
