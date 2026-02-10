@@ -14,6 +14,11 @@ const config: Config = {
   clearMocks: true,
   resetMocks: true,
   restoreMocks: true,
+  extensionsToTreatAsEsm: ['.ts'],
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+  },
+  modulePathIgnorePatterns: ['<rootDir>/dist/'],
 };
 
 export default config;
