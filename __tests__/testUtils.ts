@@ -13,14 +13,17 @@ interface AuthResponse {
 }
 
 export const signupAndLoginUser = async (user: any): Promise<AuthResponse> => {
+  // Arrange
   // Ensure user is not already signed up
   await request(app).post('/api/v1/users/signup').send(user);
 
+  // Act
   const loginRes = await request(app).post('/api/v1/users/login').send({
     email: user.email,
     password: user.password,
   });
 
+  // Assert
   if (loginRes.statusCode !== 200) {
     throw new Error(`Failed to login user: ${loginRes.body.message}`);
   }
@@ -31,12 +34,20 @@ export const signupAndLoginUser = async (user: any): Promise<AuthResponse> => {
   };
 };
 
-// Helper to clean tours data
-export const cleanTours = async (client: PoolClient) => {
-  await client.query('DELETE FROM tours');
+const tablesToTruncate = ['tours', 'users', 'reviews', 'bookings'];
+
+export const clearDb = async () => {
+  const client = await pool.connect();
+  try {
+    for (const table of tablesToTruncate) {
+      await client.query(`TRUNCATE TABLE ${table} RESTART IDENTITY CASCADE`);
+    }
+  } finally {
+    client.release();
+  }
 };
 
-// Helper to clean users data
-export const cleanUsers = async (client: PoolClient) => {
-  await client.query('DELETE FROM users');
-};
+// clear the database before each test
+beforeEach(async () => {
+  await clearDb();
+});
