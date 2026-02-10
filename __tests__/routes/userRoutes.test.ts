@@ -1,6 +1,7 @@
 import request from 'supertest';
-import app from '../../app.js';
-import { signupAndLoginUser } from '../testUtils.js';
+import app from '../../app';
+import pool from '../../db'; // Added import for pool
+import { signupAndLoginUser } from '../../__tests__/testUtils';
 
 let authToken: string; // To store auth token for authenticated tests
 
@@ -19,7 +20,25 @@ const anotherTestUser = {
 };
 
 describe('User Authentication API functionality', () => {
-  // beforeAll and afterAll are handled by global setup/teardown
+  beforeEach(async () => {
+    // Database Cleanup: TRUNCATE tables before each test
+    if (process.env.NODE_ENV === 'test') {
+      const client = await pool.connect();
+      try {
+        // TRUNCATE users, tours RESTART IDENTITY CASCADE
+        // Note: For full cleanup, I might need to truncate reviews and bookings as well
+        // But for now 'users' and 'tours' are the main tables for these tests
+        await client.query('TRUNCATE users, tours RESTART IDENTITY CASCADE;');
+      } finally {
+        client.release();
+      }
+    }
+  });
+
+  afterAll(async () => {
+    // Connection Management: Close the database connection
+    await pool.end();
+  });
 
   describe('POST /api/v1/users/signup endpoint', () => {
     it('should allow a new user to sign up successfully', async () => {
