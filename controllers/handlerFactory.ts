@@ -25,7 +25,7 @@ type RequestBody<T extends AllowedTables> = Partial<
     | 'active'
     | 'reviews'
   >
->; // Add more excluded fields as needed
+>; // I Should add more excluded fields as needed
 
 const ALLOWED_TABLES: AllowedTables[] = ['tours', 'reviews', 'users'];
 
