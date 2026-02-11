@@ -32,6 +32,7 @@ describe('Tour API functionality', () => {
   beforeAll(async () => {
     // Arrange
     // Ensure the test user exists and get an auth token
+
     const auth = await signupAndLoginUser(testUser);
     authToken = auth.token;
   });
@@ -44,6 +45,7 @@ describe('Tour API functionality', () => {
         // TRUNCATE users, tours RESTART IDENTITY CASCADE
         // Note: For full cleanup, I might need to truncate reviews and bookings as well
         // But for now 'users' and 'tours' are the main tables for these tests
+
         await client.query('TRUNCATE users, tours RESTART IDENTITY CASCADE;');
       } finally {
         client.release();
