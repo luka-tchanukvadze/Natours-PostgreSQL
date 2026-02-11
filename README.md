@@ -1,6 +1,7 @@
 # Natours - Tour Booking API (PostgreSQL Rebuild)
 
-**Original MongoDB Version:** [[GitHub Repo]](https://github.com/luka-tchanukvadze/Natours) | **Live Demo (NoSQL):** [[Vercel Link]](https://natours-eight-psi.vercel.app/)
+**Note:** For full project context, features, and business logic details, see the [Original MongoDB Version](https://github.com/luka-tchanukvadze/Natours).  
+**Links:** [Original Repo](https://github.com/luka-tchanukvadze/Natours) | [Live Demo (NoSQL)](https://natours-eight-psi.vercel.app/)
 
 This is a complete architectural rebuild of the Natours API. I transitioned from a NoSQL setup to **Raw PostgreSQL** to master relational data modeling, manual query optimization, and professional testing workflows without the abstraction of an ORM.
 
