@@ -6,11 +6,30 @@ import APIFeatures from './../utils/apiFeatures.js';
 import { User, Tour, Review } from './../types';
 
 type AllowedTables = 'tours' | 'reviews' | 'users';
-type Model = User | Tour | Review;
+
+type TableToModel = {
+  tours: Tour;
+  reviews: Review;
+  users: User;
+};
+
+// A utility type to extract the request body type for a given model
+type RequestBody<T extends AllowedTables> = Partial<
+  Omit<
+    TableToModel[T],
+    | 'id'
+    | 'created_at'
+    | 'password_changed_at'
+    | 'password_reset_token'
+    | 'password_reset_expires'
+    | 'active'
+    | 'reviews'
+  >
+>; // I Should add more excluded fields as needed
 
 const ALLOWED_TABLES: AllowedTables[] = ['tours', 'reviews', 'users'];
 
-export const deleteOne = (table: AllowedTables) =>
+export const deleteOne = <T extends AllowedTables>(table: T) =>
   catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     if (!ALLOWED_TABLES.includes(table)) {
       return next(new AppError('Invalid table name', 400));
@@ -31,17 +50,20 @@ export const deleteOne = (table: AllowedTables) =>
     });
   });
 
-export const updateOne = (table: AllowedTables, allowedFields: string[] = []) =>
+export const updateOne = <T extends AllowedTables>(
+  table: T,
+  allowedFields: (keyof RequestBody<T>)[] = [],
+) =>
   catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     if (!ALLOWED_TABLES.includes(table)) {
       return next(new AppError('Invalid table name', 400));
     }
 
     // 1) Filter body (security)
-    const body: { [key: string]: any } = {};
+    const body: Partial<RequestBody<T>> = {};
     allowedFields.forEach((field) => {
-      if (req.body[field] !== undefined) {
-        body[field] = req.body[field];
+      if (req.body[field as string] !== undefined) {
+        body[field] = req.body[field as string];
       }
     });
 
@@ -66,7 +88,7 @@ export const updateOne = (table: AllowedTables, allowedFields: string[] = []) =>
     `;
 
     const result = await pool.query(sql, values);
-    const doc: Model = result.rows[0];
+    const doc: TableToModel[T] = result.rows[0];
 
     if (!doc) {
       return next(
@@ -83,17 +105,17 @@ export const updateOne = (table: AllowedTables, allowedFields: string[] = []) =>
     });
   });
 
-export const createOne = (
-  table: AllowedTables,
-  allowedFields: string[] = [],
-  jsonbFields: string[] = [],
+export const createOne = <T extends AllowedTables>(
+  table: T,
+  allowedFields: (keyof RequestBody<T>)[] = [],
+  jsonbFields: (keyof RequestBody<T>)[] = [],
 ) =>
   catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const data: { [key: string]: any } = {};
+    const data: Partial<RequestBody<T>> = {};
 
     allowedFields.forEach((field) => {
-      if (req.body[field] !== undefined) {
-        data[field] = req.body[field];
+      if (req.body[field as string] !== undefined) {
+        data[field] = req.body[field as string];
       }
     });
 
@@ -108,7 +130,7 @@ export const createOne = (
 
     const values = Object.entries(data).map(([key, val]) => {
       // stringify ONLY JSONB columns
-      if (jsonbFields.includes(key)) {
+      if (jsonbFields.includes(key as keyof RequestBody<T>)) {
         return JSON.stringify(val);
       }
       return val; // arrays stay arrays
@@ -125,19 +147,22 @@ export const createOne = (
     res.status(201).json({
       status: 'success',
       data: {
-        [table.slice(0, -1)]: result.rows[0],
+        [table.slice(0, -1)]: result.rows[0] as TableToModel[T],
       },
     });
   });
 
-export const getOne = (table: AllowedTables, options: { path?: string } = {}) =>
+export const getOne = <T extends AllowedTables>(
+  table: T,
+  options: { path?: 'reviews' } = {},
+) =>
   catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     if (!ALLOWED_TABLES.includes(table)) {
       return next(new AppError('Invalid table name', 400));
     }
 
     const { id } = req.params;
-    let doc: Model;
+    let doc: TableToModel[T];
     let sql = `SELECT * FROM ${table} WHERE id = $1`;
 
     // 1) Get main document
@@ -173,9 +198,12 @@ export const getOne = (table: AllowedTables, options: { path?: string } = {}) =>
     });
   });
 
-export const getAll = (
-  table: AllowedTables,
-  options: { select?: string[]; virtuals?: (doc: any) => any } = {},
+export const getAll = <T extends AllowedTables>(
+  table: T,
+  options: {
+    select?: (keyof TableToModel[T])[];
+    virtuals?: (doc: TableToModel[T]) => any;
+  } = {},
 ) =>
   catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     if (!ALLOWED_TABLES.includes(table)) {
@@ -200,7 +228,7 @@ export const getAll = (
       status: 'success',
       results: result.rows.length,
       data: {
-        [table]: result.rows,
+        [table]: result.rows as TableToModel[T][],
       },
     });
   });

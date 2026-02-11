@@ -10,7 +10,7 @@ const testUser = {
   email: 'tourtest@example.com',
   password: 'password123',
   passwordConfirm: 'password123',
-  role: 'admin', // Assuming admin/lead-guide can create tours
+  role: 'admin',
 };
 
 const newTour = {
