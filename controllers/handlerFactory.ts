@@ -14,6 +14,7 @@ type TableToModel = {
 };
 
 // A utility type to extract the request body type for a given model
+// I Should add more excluded fields as needed
 type RequestBody<T extends AllowedTables> = Partial<
   Omit<
     TableToModel[T],
@@ -25,7 +26,7 @@ type RequestBody<T extends AllowedTables> = Partial<
     | 'active'
     | 'reviews'
   >
->; // I Should add more excluded fields as needed
+>;
 
 const ALLOWED_TABLES: AllowedTables[] = ['tours', 'reviews', 'users'];
 
