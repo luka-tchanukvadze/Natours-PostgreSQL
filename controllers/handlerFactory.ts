@@ -30,24 +30,85 @@ type RequestBody<T extends AllowedTables> = Partial<
 
 const ALLOWED_TABLES: AllowedTables[] = ['tours', 'reviews', 'users'];
 
-export const deleteOne = <T extends AllowedTables>(table: T) =>
+export const createOne = <T extends AllowedTables>(
+  table: T,
+  allowedFields: (keyof RequestBody<T>)[] = [],
+  jsonbFields: (keyof RequestBody<T>)[] = [],
+) =>
+  catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const data: Partial<RequestBody<T>> = {};
+
+    allowedFields.forEach((field) => {
+      if (req.body[field as string] !== undefined) {
+        data[field] = req.body[field as string];
+      }
+    });
+
+    if (Object.keys(data).length === 0) {
+      return next(new AppError('No valid fields provided', 400));
+    }
+
+    const columns = Object.keys(data).join(', ');
+    const placeholders = Object.keys(data)
+      .map((_, i) => `$${i + 1}`)
+      .join(', ');
+
+    const values = Object.entries(data).map(([key, val]) => {
+      // stringify ONLY JSONB columns
+      if (jsonbFields.includes(key as keyof RequestBody<T>)) {
+        return JSON.stringify(val);
+      }
+      return val; // arrays stay arrays
+    });
+
+    const sql = `
+      INSERT INTO ${table} (${columns})
+      VALUES (${placeholders})
+      RETURNING *;
+    `;
+
+    const result = await pool.query(sql, values);
+
+    res.status(201).json({
+      status: 'success',
+      data: {
+        [table.slice(0, -1)]: result.rows[0] as TableToModel[T],
+      },
+    });
+  });
+
+export const getAll = <T extends AllowedTables>(
+  table: T,
+  options: {
+    select?: (keyof TableToModel[T])[];
+    virtuals?: (doc: TableToModel[T]) => any;
+  } = {},
+) =>
   catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     if (!ALLOWED_TABLES.includes(table)) {
       return next(new AppError('Invalid table name', 400));
     }
 
-    const sql = `DELETE FROM ${table} WHERE id = $1`;
-    const result = await pool.query(sql, [req.params.id]);
+    const select = options.select?.length > 0 ? options.select.join(', ') : '*';
 
-    if (result.rowCount === 0) {
-      return next(
-        new AppError(`No document found with ID: ${req.params.id}`, 404),
-      );
+    const features = new APIFeatures(table, req.query, select)
+      .filter()
+      .sort()
+      .fields()
+      .paginate();
+
+    const result = await pool.query(features.sql, features.values);
+
+    if (result.rows.length === 0 && Number(req.query.page) > 1) {
+      return next(new AppError('This page does not exist', 404));
     }
 
-    res.status(204).json({
+    res.status(200).json({
       status: 'success',
-      data: null,
+      results: result.rows.length,
+      data: {
+        [table]: result.rows as TableToModel[T][],
+      },
     });
   });
 
@@ -106,53 +167,6 @@ export const updateOne = <T extends AllowedTables>(
     });
   });
 
-export const createOne = <T extends AllowedTables>(
-  table: T,
-  allowedFields: (keyof RequestBody<T>)[] = [],
-  jsonbFields: (keyof RequestBody<T>)[] = [],
-) =>
-  catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const data: Partial<RequestBody<T>> = {};
-
-    allowedFields.forEach((field) => {
-      if (req.body[field as string] !== undefined) {
-        data[field] = req.body[field as string];
-      }
-    });
-
-    if (Object.keys(data).length === 0) {
-      return next(new AppError('No valid fields provided', 400));
-    }
-
-    const columns = Object.keys(data).join(', ');
-    const placeholders = Object.keys(data)
-      .map((_, i) => `$${i + 1}`)
-      .join(', ');
-
-    const values = Object.entries(data).map(([key, val]) => {
-      // stringify ONLY JSONB columns
-      if (jsonbFields.includes(key as keyof RequestBody<T>)) {
-        return JSON.stringify(val);
-      }
-      return val; // arrays stay arrays
-    });
-
-    const sql = `
-      INSERT INTO ${table} (${columns})
-      VALUES (${placeholders})
-      RETURNING *;
-    `;
-
-    const result = await pool.query(sql, values);
-
-    res.status(201).json({
-      status: 'success',
-      data: {
-        [table.slice(0, -1)]: result.rows[0] as TableToModel[T],
-      },
-    });
-  });
-
 export const getOne = <T extends AllowedTables>(
   table: T,
   options: { path?: 'reviews' } = {},
@@ -199,37 +213,23 @@ export const getOne = <T extends AllowedTables>(
     });
   });
 
-export const getAll = <T extends AllowedTables>(
-  table: T,
-  options: {
-    select?: (keyof TableToModel[T])[];
-    virtuals?: (doc: TableToModel[T]) => any;
-  } = {},
-) =>
+export const deleteOne = <T extends AllowedTables>(table: T) =>
   catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     if (!ALLOWED_TABLES.includes(table)) {
       return next(new AppError('Invalid table name', 400));
     }
 
-    const select = options.select?.length > 0 ? options.select.join(', ') : '*';
+    const sql = `DELETE FROM ${table} WHERE id = $1`;
+    const result = await pool.query(sql, [req.params.id]);
 
-    const features = new APIFeatures(table, req.query, select)
-      .filter()
-      .sort()
-      .fields()
-      .paginate();
-
-    const result = await pool.query(features.sql, features.values);
-
-    if (result.rows.length === 0 && Number(req.query.page) > 1) {
-      return next(new AppError('This page does not exist', 404));
+    if (result.rowCount === 0) {
+      return next(
+        new AppError(`No document found with ID: ${req.params.id}`, 404),
+      );
     }
 
-    res.status(200).json({
+    res.status(204).json({
       status: 'success',
-      results: result.rows.length,
-      data: {
-        [table]: result.rows as TableToModel[T][],
-      },
+      data: null,
     });
   });
